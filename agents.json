@@ -1,0 +1,31 @@
+{
+  "agents": [
+    {
+      "id": "AGT-0001",
+      "name": "eng",
+      "platform": "Custom Enterprise Agents",
+      "department": "Engineering",
+      "owner": "abc",
+      "status": "Active",
+      "environment": "Production",
+      "purpose": "test",
+      "endpoint": "http://localhost:8108/",
+      "piiAccess": false,
+      "financialAccess": false,
+      "riskScore": 0,
+      "certificationStatus": "Pending",
+      "region": "local",
+      "monthlyCost": 641.0,
+      "tasksExecuted": 40329,
+      "successRate": "99.5",
+      "availability": "99.9",
+      "avgLatency": 200.0,
+      "tokenUsage": 16578118,
+      "model": "",
+      "criticality": "Low",
+      "onboardedAt": "2026-06-19T08:08:21.964467+00:00",
+      "lastSeen": "2026-06-19T08:08:21.964491+00:00"
+    }
+  ],
+  "updated": "2026-06-19T09:39:38.005634+00:00"
+}

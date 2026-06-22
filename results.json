@@ -1,0 +1,385 @@
+{
+  "compliance": {
+    "frameworks": [
+      {
+        "name": "GDPR",
+        "avg_score": 100.0,
+        "compliant_count": 1,
+        "total_count": 1,
+        "findings": []
+      },
+      {
+        "name": "SOX",
+        "avg_score": 100.0,
+        "compliant_count": 1,
+        "total_count": 1,
+        "findings": []
+      },
+      {
+        "name": "HIPAA",
+        "avg_score": 100.0,
+        "compliant_count": 1,
+        "total_count": 1,
+        "findings": []
+      },
+      {
+        "name": "SOC 2",
+        "avg_score": 100.0,
+        "compliant_count": 1,
+        "total_count": 1,
+        "findings": []
+      },
+      {
+        "name": "ISO 27001",
+        "avg_score": 100.0,
+        "compliant_count": 1,
+        "total_count": 1,
+        "findings": []
+      }
+    ],
+    "findings": [],
+    "agent_results": [
+      {
+        "agent_id": "AGT-0001",
+        "agent_name": "eng",
+        "frameworks": [
+          {
+            "name": "GDPR",
+            "compliant": true,
+            "score": 100,
+            "findings": []
+          },
+          {
+            "name": "SOX",
+            "compliant": true,
+            "score": 100,
+            "findings": []
+          },
+          {
+            "name": "HIPAA",
+            "compliant": true,
+            "score": 100,
+            "findings": []
+          },
+          {
+            "name": "SOC 2",
+            "compliant": true,
+            "score": 100,
+            "findings": []
+          },
+          {
+            "name": "ISO 27001",
+            "compliant": true,
+            "score": 100,
+            "findings": []
+          }
+        ],
+        "overall_score": 100
+      }
+    ],
+    "provider": "NVIDIA NIM",
+    "timestamp": "2026-06-19T09:38:37.594582Z",
+    "_meta": {
+      "agent_type": "compliance",
+      "elapsed_seconds": 16.98,
+      "agents_analyzed": 1,
+      "timestamp": "2026-06-19T09:38:37.594740+00:00"
+    }
+  },
+  "risk": {
+    "agents": [
+      {
+        "id": "AGT-0001",
+        "name": "eng",
+        "risk_score": 75,
+        "risk_level": "High",
+        "reasoning": "The primary risk for AGT-0001 stems from its stated 'test' purpose operating within a 'Production' environment. This configuration significantly increases the likelihood of operational instability, unintended side effects on production systems, and potential security vulnerabilities due to relaxed testing configurations or inadequate hardening for a production context. While the agent does not access PII or financial data, and its endpoint is 'localhost' (limiting direct external network exposure), its presence on a production machine still poses an internal attack surface if the host is compromised. The 'Custom Enterprise Agents' platform also introduces potential for unknown vulnerabilities compared to well-vetted solutions.",
+        "risk_factors": [
+          "Purpose (test in production environment)",
+          "Environment (production for a test agent)",
+          "Endpoint exposure (localhost in production)",
+          "Platform (custom enterprise agents)"
+        ]
+      }
+    ],
+    "high_risk_count": 1,
+    "avg_risk_score": 75.0,
+    "distribution": {
+      "Low": 0,
+      "Medium": 0,
+      "High": 1,
+      "Critical": 0
+    },
+    "provider": "Google Gemini",
+    "timestamp": "2026-06-19T09:38:49.522803Z",
+    "_meta": {
+      "agent_type": "risk",
+      "elapsed_seconds": 11.88,
+      "agents_analyzed": 1,
+      "timestamp": "2026-06-19T09:38:49.522931+00:00"
+    }
+  },
+  "governance": {
+    "violations": [
+      {
+        "id": "VIO-001",
+        "policy_id": "GOV-COST-001",
+        "policy_name": "Cost Anomaly Detection",
+        "agent_id": "AGT-0001",
+        "agent_name": "eng",
+        "severity": "Medium",
+        "details": "Agent AGT-0001 (eng) has a monthly cost of 641.0, which exceeds the acceptable threshold of 500.",
+        "recommendation": "Review agent's resource utilization and optimize cost, or adjust the cost threshold if justified.",
+        "status": "Open"
+      },
+      {
+        "id": "VIO-002",
+        "policy_id": "GOV-MODEL-001",
+        "policy_name": "Model Version Control",
+        "agent_id": "AGT-0001",
+        "agent_name": "eng",
+        "severity": "High",
+        "details": "Agent AGT-0001 (eng) is using a model/platform ('Custom Enterprise Agents') not found on the approved list.",
+        "recommendation": "Migrate agent to an approved model/platform or initiate a review process for the current model/platform.",
+        "status": "Open"
+      },
+      {
+        "id": "VIO-003",
+        "policy_id": "GOV-CERT-001",
+        "policy_name": "Certification Expiry",
+        "agent_id": "AGT-0001",
+        "agent_name": "eng",
+        "severity": "Medium",
+        "details": "Agent AGT-0001 (eng) has a certification status of 'Pending', indicating it's not fully certified.",
+        "recommendation": "Expedite the certification process for agent AGT-0001 to ensure compliance.",
+        "status": "Open"
+      }
+    ],
+    "actions": [
+      {
+        "time": "2024-07-30T12:00:00.000000+00:00",
+        "action": "Flagged agent 'eng' for exceeding monthly cost threshold (641.0 > 500).",
+        "agent": "eng",
+        "type": "warning"
+      },
+      {
+        "time": "2024-07-30T12:00:00.000000+00:00",
+        "action": "Flagged agent 'eng' for using an unapproved model/platform 'Custom Enterprise Agents'.",
+        "agent": "eng",
+        "type": "danger"
+      },
+      {
+        "time": "2024-07-30T12:00:00.000000+00:00",
+        "action": "Flagged agent 'eng' for 'Pending' certification status.",
+        "agent": "eng",
+        "type": "warning"
+      }
+    ],
+    "total_violations": 3,
+    "provider": "Google Gemini / gemini-2.5-flash",
+    "timestamp": "2026-06-19T09:38:49Z",
+    "_meta": {
+      "agent_type": "governance",
+      "elapsed_seconds": 12.91,
+      "agents_analyzed": 1,
+      "timestamp": "2026-06-19T09:39:02.512967+00:00"
+    }
+  },
+  "cost": {
+    "total_monthly_spend": 641.0,
+    "avg_cost_per_agent": 641.0,
+    "avg_cost_per_task": 0.0161,
+    "total_tasks": 39724,
+    "by_platform": {
+      "labels": [
+        "Custom Enterprise Agents"
+      ],
+      "data": [
+        641.0
+      ]
+    },
+    "top_spenders": [
+      {
+        "name": "eng",
+        "cost": 641.0,
+        "tasks": 39724,
+        "cost_per_task": 0.0161,
+        "successRate": 99.5,
+        "tokenUsage": 16330526,
+        "department": "Engineering",
+        "platform": "Custom Enterprise Agents"
+      }
+    ],
+    "all_agents_summary": [
+      {
+        "name": "eng",
+        "cost": 641.0,
+        "tasks": 39724,
+        "cost_per_task": 0.0161,
+        "successRate": 99.5,
+        "tokenUsage": 16330526,
+        "department": "Engineering",
+        "platform": "Custom Enterprise Agents"
+      }
+    ],
+    "anomalies": [
+      {
+        "agent": "eng",
+        "issue": "High token usage",
+        "severity": "medium"
+      },
+      {
+        "agent": "eng",
+        "issue": "No model specified",
+        "severity": "low"
+      }
+    ],
+    "recommendations": [
+      {
+        "title": "Optimize Token Usage",
+        "description": "Review and optimize token usage for agent 'eng' to reduce costs",
+        "savings": "10%",
+        "priority": "medium"
+      },
+      {
+        "title": "Specify Model for Agent",
+        "description": "Specify a model for agent 'eng' to improve cost transparency and potential optimization opportunities",
+        "savings": "5%",
+        "priority": "low"
+      },
+      {
+        "title": "Review Agent Purpose and Criticality",
+        "description": "Review the purpose and criticality of agent 'eng' to ensure alignment with business objectives and cost allocation",
+        "savings": "0%",
+        "priority": "low"
+      }
+    ],
+    "roi_analysis": "The current ROI outlook for the AI agent 'eng' is neutral, with a moderate cost-efficiency score. While the agent's success rate and availability are high, the token usage and lack of model specification suggest opportunities for cost optimization. By addressing these anomalies and implementing the recommended optimizations, the organization can potentially reduce costs by 10-15% and improve the overall ROI of the AI agent.",
+    "provider": "NVIDIA NIM",
+    "timestamp": "2026-06-19T09:39:02.582765Z",
+    "_meta": {
+      "agent_type": "cost",
+      "elapsed_seconds": 25.6,
+      "agents_analyzed": 1,
+      "timestamp": "2026-06-19T09:39:28.184462+00:00"
+    }
+  },
+  "health": {
+    "agents": [
+      {
+        "id": "AGT-0001",
+        "name": "eng",
+        "endpoint_reachable": true,
+        "response_time_ms": 2055.8,
+        "status_code": 405,
+        "health_score": 75,
+        "health_status": "Degraded",
+        "assessment": "High response time: 2055.8ms; Client error: HTTP 405"
+      }
+    ],
+    "summary": {
+      "total": 1,
+      "healthy": 0,
+      "degraded": 1,
+      "unhealthy": 0
+    },
+    "provider": "NVIDIA NIM",
+    "timestamp": "2026-06-19T09:39:28.251016Z",
+    "_meta": {
+      "agent_type": "health",
+      "elapsed_seconds": 9.69,
+      "agents_analyzed": 1,
+      "timestamp": "2026-06-19T09:39:37.945661+00:00"
+    }
+  },
+  "audit": {
+    "executive_summary": "The audit of AI agents in the enterprise revealed several critical and high-risk findings, including non-compliance with internal policies, potential security vulnerabilities, and inadequate model version control. The findings highlight the need for immediate attention to remediate these issues and ensure the secure and compliant operation of AI agents in the enterprise. The audit also identified areas for improvement in cost management, certification, and risk assessment.",
+    "findings": [
+      {
+        "id": "FND-001",
+        "severity": "High",
+        "framework": "Internal Policy",
+        "description": "Agent AGT-0001 (eng) is operating in a production environment with a 'test' purpose, posing a risk of operational instability and potential security vulnerabilities.",
+        "recommendation": "Migrate the agent to a non-production environment or reconfigure its purpose to align with the production environment.",
+        "status": "Open",
+        "due_date": "2026-07-03"
+      },
+      {
+        "id": "FND-002",
+        "severity": "Critical",
+        "framework": "Internal Policy",
+        "description": "Agent AGT-0001 (eng) is using a custom enterprise agent platform not found on the approved list, posing a risk of unknown vulnerabilities.",
+        "recommendation": "Migrate the agent to an approved model/platform or initiate a review process for the current model/platform.",
+        "status": "Open",
+        "due_date": "2026-07-03"
+      },
+      {
+        "id": "FND-003",
+        "severity": "Medium",
+        "framework": "Internal Policy",
+        "description": "Agent AGT-0001 (eng) has a monthly cost of 641.0, exceeding the acceptable threshold of 500.",
+        "recommendation": "Review the agent's resource utilization and optimize cost, or adjust the cost threshold if justified.",
+        "status": "Open",
+        "due_date": "2026-07-10"
+      },
+      {
+        "id": "FND-004",
+        "severity": "Medium",
+        "framework": "Internal Policy",
+        "description": "Agent AGT-0001 (eng) has a certification status of 'Pending', indicating it's not fully certified.",
+        "recommendation": "Expedite the certification process for the agent to ensure compliance.",
+        "status": "Open",
+        "due_date": "2026-07-10"
+      }
+    ],
+    "timeline": [
+      {
+        "date": "2026-06-19",
+        "event": "Audit started",
+        "type": "info"
+      },
+      {
+        "date": "2026-06-19",
+        "event": "Key findings discovered, including non-compliance with internal policies and potential security vulnerabilities",
+        "type": "warning"
+      },
+      {
+        "date": "2026-06-19",
+        "event": "Audit report generated, highlighting critical and high-risk findings",
+        "type": "danger"
+      },
+      {
+        "date": "2026-07-03",
+        "event": "Remediation deadline for critical findings",
+        "type": "danger"
+      },
+      {
+        "date": "2026-07-10",
+        "event": "Remediation deadline for medium-risk findings",
+        "type": "warning"
+      }
+    ],
+    "reports": [
+      {
+        "name": "AI Agent Audit Report",
+        "date": "2026-06-19",
+        "status": "Published",
+        "findings": 4
+      }
+    ],
+    "stats": {
+      "audits_completed": 1,
+      "open_findings": 4,
+      "critical_findings": 1,
+      "avg_remediation": "14 days"
+    },
+    "provider": "NVIDIA NIM / meta/llama-3.1-70b-instruct",
+    "timestamp": "2026-06-19T09:39:38Z",
+    "_meta": {
+      "agent_type": "audit",
+      "elapsed_seconds": 39.65,
+      "agents_analyzed": 1,
+      "timestamp": "2026-06-19T09:40:17.654668+00:00"
+    }
+  }
+}

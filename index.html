@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AETHER — The System of Record for Enterprise AI Workforces. Workday for AI Workers. Visa for AI Agents." />
+  <meta name="theme-color" content="#060a13" />
+  <title>AETHER — Enterprise AI Workforce Platform</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233b82f6'/%3E%3Ctext x='16' y='22' text-anchor='middle' fill='white' font-family='Inter,sans-serif' font-size='16' font-weight='700'%3EÆ%3C/text%3E%3C/svg%3E" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/design-system.css" />
+  <link rel="stylesheet" href="css/components.css" />
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- Application Root -->
+  <div id="app">
+    <!-- Loading State -->
+    <div style="display: flex; align-items: center; justify-content: center; height: 100vh; width: 100vw; background: #060a13;">
+      <div style="text-align: center;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; color: white; margin: 0 auto 16px; font-family: 'Inter', sans-serif; box-shadow: 0 0 24px rgba(59, 130, 246, 0.3);">Æ</div>
+        <div style="font-family: 'Inter', sans-serif; font-size: 14px; color: #7a85a0; letter-spacing: 0.1em;">LOADING AETHER</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agents Config (loaded first — central registry) -->
+  <script src="js/agents-config.js"></script>
+
+  <!-- Data Layer -->
+  <script src="js/data.js"></script>
+
+  <!-- Chart Helpers -->
+  <script src="js/charts.js"></script>
+
+  <!-- Agentic Engine -->
+  <script src="js/event-bus.js"></script>
+  <script src="js/agents-runtime.js"></script>
+  <script src="js/agents-supervisor.js"></script>
+
+  <!-- Knowledge Graph -->
+  <script src="js/knowledge-graph.js"></script>
+
+  <!-- Page Renderers -->
+  <script src="js/pages/dashboard.js"></script>
+  <script src="js/pages/agents.js"></script>
+  <script src="js/pages/governance.js"></script>
+  <script src="js/pages/operations.js"></script>
+  <script src="js/pages/executive.js"></script>
+  <script src="js/pages/audit.js"></script>
+  <script src="js/pages/integrations.js"></script>
+  <script src="js/pages/rationale.js"></script>
+
+  <!-- Application Shell (must load last) -->
+  <script src="js/app.js"></script>
+</body>
+</html>

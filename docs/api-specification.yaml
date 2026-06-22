@@ -1,0 +1,3913 @@
+openapi: 3.0.3
+info:
+  title: AETHER Platform API
+  version: 1.0.0
+  description: |
+    Comprehensive REST API for the AETHER Enterprise AI Workforce Platform.
+    
+    AETHER is the unified control plane for enterprise AI workforces — discovering,
+    governing, monitoring, and orchestrating all AI agents across the enterprise.
+    
+    ## Authentication
+    All endpoints require authentication via one of:
+    - **Bearer Token**: JWT issued by Azure Entra ID
+    - **API Key**: Platform-issued API key in `X-API-Key` header
+    - **OAuth 2.0**: Authorization code flow with Azure Entra ID
+    
+    ## Multi-Tenancy
+    All requests are scoped to the authenticated tenant. Tenant context is extracted
+    from the JWT `tid` claim or the API key's associated tenant.
+    
+    ## Rate Limiting
+    - Standard tier: 1,000 requests/minute
+    - Premium tier: 10,000 requests/minute
+    - Rate limit headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
+  contact:
+    name: AETHER Platform Team
+    email: platform@aether-platform.com
+    url: https://docs.aether-platform.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: https://api.aether-platform.com/v1
+    description: Production
+  - url: https://api-staging.aether-platform.com/v1
+    description: Staging
+  - url: http://localhost:8000/v1
+    description: Local Development
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+tags:
+  - name: Agents
+    description: AI agent registry — CRUD, lifecycle, health, metrics, activity
+  - name: Discovery
+    description: Agent discovery scans across enterprise platforms
+  - name: Governance
+    description: Policy management and violation tracking
+  - name: Compliance
+    description: Regulatory framework mapping and compliance assessments
+  - name: Risk
+    description: Agent risk assessments and scoring
+  - name: Cost
+    description: Cost tracking, budgets, and optimization
+  - name: Identity
+    description: Agent credential and identity management
+  - name: Events
+    description: Event streaming, subscriptions, and history
+  - name: Integrations
+    description: Platform connectors, webhooks, and SDK registration
+  - name: Audit
+    description: Audit logs, reports, and executive summaries
+  - name: Knowledge Graph
+    description: Knowledge graph nodes, edges, and queries
+  - name: Auth
+    description: Authentication and user session management
+
+paths:
+  # ─────────────────────────────────────────────
+  # AGENTS
+  # ─────────────────────────────────────────────
+  /agents:
+    get:
+      tags: [Agents]
+      operationId: listAgents
+      summary: List agents
+      description: Retrieve a paginated list of agents with optional filters.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/AgentStatusEnum'
+        - name: platform
+          in: query
+          schema:
+            $ref: '#/components/schemas/AgentPlatformEnum'
+        - name: environment
+          in: query
+          schema:
+            $ref: '#/components/schemas/AgentEnvironmentEnum'
+        - name: department_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: owner_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: risk_level
+          in: query
+          schema:
+            $ref: '#/components/schemas/RiskLevelEnum'
+        - name: search
+          in: query
+          description: Full-text search across agent name and description
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated list of agents
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Agent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [Agents]
+      operationId: createAgent
+      summary: Register a new agent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentCreate'
+            example:
+              name: Customer Support Bot
+              description: Handles tier-1 customer support inquiries
+              platform: copilot_studio
+              environment: production
+              endpoint_url: https://copilot.example.com/api/bot
+              region: eastus
+              runtime: node20
+              version: "2.1.0"
+              owner_id: 550e8400-e29b-41d4-a716-446655440001
+              department_id: 550e8400-e29b-41d4-a716-446655440010
+              monitoring_method: connector_pull
+              tags:
+                team: customer-success
+                tier: production
+              pii_access: true
+              financial_access: false
+              external_access: true
+      responses:
+        '201':
+          description: Agent created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Agent with this external_id already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /agents/{agent_id}:
+    parameters:
+      - $ref: '#/components/parameters/AgentIdParam'
+    get:
+      tags: [Agents]
+      operationId: getAgent
+      summary: Get agent details
+      responses:
+        '200':
+          description: Agent details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Agents]
+      operationId: updateAgent
+      summary: Update agent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentUpdate'
+      responses:
+        '200':
+          description: Agent updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags: [Agents]
+      operationId: deleteAgent
+      summary: Delete agent
+      responses:
+        '204':
+          description: Agent deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /agents/{agent_id}/onboard:
+    parameters:
+      - $ref: '#/components/parameters/AgentIdParam'
+    post:
+      tags: [Agents]
+      operationId: onboardAgent
+      summary: Onboard agent
+      description: Transition agent from discovered/onboarding to active status, provisioning credentials and enabling monitoring.
+      responses:
+        '200':
+          description: Agent onboarded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Agent is already onboarded or in invalid state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /agents/{agent_id}/offboard:
+    parameters:
+      - $ref: '#/components/parameters/AgentIdParam'
+    post:
+      tags: [Agents]
+      operationId: offboardAgent
+      summary: Offboard agent
+      description: Deactivate agent, revoke credentials, and stop monitoring.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for offboarding
+                revoke_credentials:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Agent offboarded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /agents/{agent_id}/activity:
+    parameters:
+      - $ref: '#/components/parameters/AgentIdParam'
+    get:
+      tags: [Agents]
+      operationId: getAgentActivity
+      summary: Get agent activity log
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: activity_type
+          in: query
+          schema:
+            type: string
+            enum: [inference, tool_call, data_access, api_call, file_operation, user_interaction]
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Paginated activity log
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AgentActivity'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /agents/{agent_id}/metrics:
+    parameters:
+      - $ref: '#/components/parameters/AgentIdParam'
+    get:
+      tags: [Agents]
+      operationId: getAgentMetrics
+      summary: Get agent metrics
+      parameters:
+        - name: metric_name
+          in: query
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: interval
+          in: query
+          description: Aggregation interval
+          schema:
+            type: string
+            enum: [1m, 5m, 15m, 1h, 6h, 1d, 7d]
+            default: 1h
+      responses:
+        '200':
+          description: Agent metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentMetrics'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /agents/{agent_id}/health:
+    parameters:
+      - $ref: '#/components/parameters/AgentIdParam'
+    get:
+      tags: [Agents]
+      operationId: getAgentHealth
+      summary: Get agent health status
+      responses:
+        '200':
+          description: Agent health
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentHealth'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /agents/search:
+    post:
+      tags: [Agents]
+      operationId: searchAgents
+      summary: Advanced agent search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: Full-text search query
+                filters:
+                  type: object
+                  properties:
+                    status:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/AgentStatusEnum'
+                    platform:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/AgentPlatformEnum'
+                    environment:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/AgentEnvironmentEnum'
+                    risk_level:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/RiskLevelEnum'
+                    department_ids:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                    tags:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    pii_access:
+                      type: boolean
+                    financial_access:
+                      type: boolean
+                sort_by:
+                  type: string
+                  default: relevance
+                page:
+                  type: integer
+                  default: 1
+                page_size:
+                  type: integer
+                  default: 20
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Agent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /agents/bulk:
+    post:
+      tags: [Agents]
+      operationId: bulkAgentOperation
+      summary: Bulk agent operations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkOperationRequest'
+      responses:
+        '200':
+          description: Bulk operation results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkOperationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─────────────────────────────────────────────
+  # DISCOVERY
+  # ─────────────────────────────────────────────
+  /discovery/scan:
+    post:
+      tags: [Discovery]
+      operationId: triggerScan
+      summary: Trigger a discovery scan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [integration_id]
+              properties:
+                integration_id:
+                  type: string
+                  format: uuid
+                  description: Integration to scan
+                platform:
+                  $ref: '#/components/schemas/AgentPlatformEnum'
+                full_scan:
+                  type: boolean
+                  default: false
+                  description: If true, performs a full scan ignoring cache
+      responses:
+        '202':
+          description: Scan initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scan_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    example: pending
+                  message:
+                    type: string
+                    example: Discovery scan initiated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /discovery/scans:
+    get:
+      tags: [Discovery]
+      operationId: listScans
+      summary: List discovery scans
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ScanStatusEnum'
+        - name: platform
+          in: query
+          schema:
+            $ref: '#/components/schemas/AgentPlatformEnum'
+      responses:
+        '200':
+          description: Paginated list of scans
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/DiscoveryScan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /discovery/scans/{scan_id}:
+    parameters:
+      - name: scan_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Discovery]
+      operationId: getScan
+      summary: Get scan details
+      responses:
+        '200':
+          description: Scan details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiscoveryScan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /discovery/coverage:
+    get:
+      tags: [Discovery]
+      operationId: getDiscoveryCoverage
+      summary: Get discovery coverage statistics
+      responses:
+        '200':
+          description: Coverage stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_integrations:
+                    type: integer
+                  active_integrations:
+                    type: integer
+                  total_agents_discovered:
+                    type: integer
+                  platforms_covered:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        platform:
+                          $ref: '#/components/schemas/AgentPlatformEnum'
+                        agent_count:
+                          type: integer
+                        last_scan_at:
+                          type: string
+                          format: date-time
+                  coverage_percentage:
+                    type: number
+                    format: float
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─────────────────────────────────────────────
+  # GOVERNANCE
+  # ─────────────────────────────────────────────
+  /governance/policies:
+    get:
+      tags: [Governance]
+      operationId: listPolicies
+      summary: List governance policies
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: enforcement
+          in: query
+          schema:
+            $ref: '#/components/schemas/PolicyEnforcementEnum'
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Paginated list of policies
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Policy'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Governance]
+      operationId: createPolicy
+      summary: Create a governance policy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyCreate'
+      responses:
+        '201':
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /governance/policies/{policy_id}:
+    parameters:
+      - name: policy_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Governance]
+      operationId: getPolicy
+      summary: Get policy details
+      responses:
+        '200':
+          description: Policy details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Governance]
+      operationId: updatePolicy
+      summary: Update policy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyCreate'
+      responses:
+        '200':
+          description: Policy updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Governance]
+      operationId: deletePolicy
+      summary: Delete policy
+      responses:
+        '204':
+          description: Policy deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /governance/violations:
+    get:
+      tags: [Governance]
+      operationId: listViolations
+      summary: List policy violations
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ViolationStatusEnum'
+        - name: severity
+          in: query
+          schema:
+            $ref: '#/components/schemas/EventSeverityEnum'
+        - name: policy_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Paginated list of violations
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Violation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /governance/violations/{violation_id}:
+    parameters:
+      - name: violation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Governance]
+      operationId: getViolation
+      summary: Get violation details
+      responses:
+        '200':
+          description: Violation details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Violation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Governance]
+      operationId: updateViolation
+      summary: Update violation status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationUpdate'
+      responses:
+        '200':
+          description: Violation updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Violation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /governance/enforce:
+    post:
+      tags: [Governance]
+      operationId: triggerEnforcement
+      summary: Trigger enforcement action
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [agent_id, action]
+              properties:
+                agent_id:
+                  type: string
+                  format: uuid
+                action:
+                  type: string
+                  enum: [warn, suspend, offboard, restrict]
+                reason:
+                  type: string
+                policy_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Enforcement action executed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  action:
+                    type: string
+                  agent_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ─────────────────────────────────────────────
+  # COMPLIANCE
+  # ─────────────────────────────────────────────
+  /compliance/frameworks:
+    get:
+      tags: [Compliance]
+      operationId: listFrameworks
+      summary: List compliance frameworks
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Paginated list of frameworks
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ComplianceFramework'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Compliance]
+      operationId: createFramework
+      summary: Create compliance framework
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComplianceFrameworkCreate'
+      responses:
+        '201':
+          description: Framework created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceFramework'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /compliance/frameworks/{framework_id}:
+    parameters:
+      - name: framework_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Compliance]
+      operationId: getFramework
+      summary: Get framework details
+      responses:
+        '200':
+          description: Framework details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceFramework'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /compliance/frameworks/{framework_id}/controls:
+    parameters:
+      - name: framework_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Compliance]
+      operationId: getFrameworkControls
+      summary: Get framework controls
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: is_automated
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Paginated controls
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ComplianceControl'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /compliance/assessments:
+    post:
+      tags: [Compliance]
+      operationId: runAssessment
+      summary: Run compliance assessment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [framework_id]
+              properties:
+                framework_id:
+                  type: string
+                  format: uuid
+                agent_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Specific agents to assess. If empty, assesses all agents.
+                scope:
+                  type: string
+                  enum: [full, incremental]
+                  default: incremental
+      responses:
+        '202':
+          description: Assessment initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  assessment_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    example: running
+                  agents_count:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /compliance/findings:
+    get:
+      tags: [Compliance]
+      operationId: listFindings
+      summary: List compliance findings
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: severity
+          in: query
+          schema:
+            $ref: '#/components/schemas/FindingSeverityEnum'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ViolationStatusEnum'
+        - name: framework_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Paginated findings
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ComplianceFinding'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /compliance/findings/{finding_id}:
+    parameters:
+      - name: finding_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Compliance]
+      operationId: getFinding
+      summary: Get finding details
+      responses:
+        '200':
+          description: Finding details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceFinding'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Compliance]
+      operationId: updateFinding
+      summary: Update finding status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: '#/components/schemas/ViolationStatusEnum'
+                resolution_notes:
+                  type: string
+      responses:
+        '200':
+          description: Finding updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceFinding'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ─────────────────────────────────────────────
+  # RISK
+  # ─────────────────────────────────────────────
+  /risk/assessments:
+    get:
+      tags: [Risk]
+      operationId: listRiskAssessments
+      summary: List risk assessments
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: risk_level
+          in: query
+          schema:
+            $ref: '#/components/schemas/RiskLevelEnum'
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Paginated risk assessments
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RiskAssessment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Risk]
+      operationId: createRiskAssessment
+      summary: Trigger risk assessment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [agent_id]
+              properties:
+                agent_id:
+                  type: string
+                  format: uuid
+                assessment_type:
+                  type: string
+                  enum: [automated, manual]
+                  default: automated
+      responses:
+        '201':
+          description: Assessment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskAssessment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /risk/assessments/{assessment_id}:
+    parameters:
+      - name: assessment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Risk]
+      operationId: getRiskAssessment
+      summary: Get risk assessment details
+      responses:
+        '200':
+          description: Risk assessment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskAssessment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /risk/scores:
+    get:
+      tags: [Risk]
+      operationId: getRiskScores
+      summary: Get risk score summary
+      parameters:
+        - name: group_by
+          in: query
+          schema:
+            type: string
+            enum: [department, platform, risk_level]
+            default: risk_level
+      responses:
+        '200':
+          description: Risk score summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskScoreSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /risk/factors:
+    get:
+      tags: [Risk]
+      operationId: getRiskFactors
+      summary: Get risk factor definitions
+      responses:
+        '200':
+          description: Risk factor definitions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  factors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        weight:
+                          type: number
+                          format: float
+                        scoring_criteria:
+                          type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─────────────────────────────────────────────
+  # COST
+  # ─────────────────────────────────────────────
+  /cost/summary:
+    get:
+      tags: [Cost]
+      operationId: getCostSummary
+      summary: Get cost summary
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, quarter, year]
+            default: month
+        - name: group_by
+          in: query
+          schema:
+            type: string
+            enum: [agent, department, platform]
+            default: agent
+      responses:
+        '200':
+          description: Cost summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CostSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /cost/agents/{agent_id}:
+    parameters:
+      - $ref: '#/components/parameters/AgentIdParam'
+    get:
+      tags: [Cost]
+      operationId: getAgentCosts
+      summary: Get agent cost details
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Agent cost details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CostDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /cost/departments/{department_id}:
+    parameters:
+      - name: department_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Cost]
+      operationId: getDepartmentCosts
+      summary: Get department cost details
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Department costs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CostDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /cost/budget:
+    get:
+      tags: [Cost]
+      operationId: getBudget
+      summary: Get budget status
+      responses:
+        '200':
+          description: Budget status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Budget'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Cost]
+      operationId: setBudget
+      summary: Set budget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetCreate'
+      responses:
+        '201':
+          description: Budget set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Budget'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /cost/optimization:
+    get:
+      tags: [Cost]
+      operationId: getOptimizationRecommendations
+      summary: Get cost optimization recommendations
+      responses:
+        '200':
+          description: Optimization recommendations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_potential_savings:
+                    type: number
+                    format: float
+                  currency:
+                    type: string
+                    default: USD
+                  recommendations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        agent_id:
+                          type: string
+                          format: uuid
+                        agent_name:
+                          type: string
+                        recommendation:
+                          type: string
+                        potential_savings:
+                          type: number
+                          format: float
+                        priority:
+                          type: string
+                          enum: [high, medium, low]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─────────────────────────────────────────────
+  # IDENTITY
+  # ─────────────────────────────────────────────
+  /identity/credentials:
+    get:
+      tags: [Identity]
+      operationId: listCredentials
+      summary: List credentials
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: credential_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/CredentialTypeEnum'
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Paginated credentials
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Credential'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Identity]
+      operationId: createCredential
+      summary: Create credential
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialCreate'
+      responses:
+        '201':
+          description: Credential created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credential'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /identity/credentials/{credential_id}:
+    parameters:
+      - name: credential_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Identity]
+      operationId: getCredential
+      summary: Get credential details
+      responses:
+        '200':
+          description: Credential details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credential'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /identity/credentials/{credential_id}/rotate:
+    parameters:
+      - name: credential_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Identity]
+      operationId: rotateCredential
+      summary: Rotate credential
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                force:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Credential rotated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credential'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /identity/validate:
+    post:
+      tags: [Identity]
+      operationId: validateCredentials
+      summary: Validate credentials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [agent_id]
+              properties:
+                agent_id:
+                  type: string
+                  format: uuid
+                credential_identifier:
+                  type: string
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  agent_id:
+                    type: string
+                    format: uuid
+                  expires_at:
+                    type: string
+                    format: date-time
+                  needs_rotation:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─────────────────────────────────────────────
+  # EVENTS
+  # ─────────────────────────────────────────────
+  /events:
+    get:
+      tags: [Events]
+      operationId: listEvents
+      summary: List events
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: event_type
+          in: query
+          schema:
+            type: string
+        - name: severity
+          in: query
+          schema:
+            $ref: '#/components/schemas/EventSeverityEnum'
+        - name: source
+          in: query
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Paginated events
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Event'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events/stream:
+    get:
+      tags: [Events]
+      operationId: streamEvents
+      summary: Server-Sent Events stream
+      description: Real-time event stream using Server-Sent Events (SSE).
+      parameters:
+        - name: event_types
+          in: query
+          description: Comma-separated list of event types to filter
+          schema:
+            type: string
+        - name: severity
+          in: query
+          schema:
+            $ref: '#/components/schemas/EventSeverityEnum'
+      responses:
+        '200':
+          description: SSE event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events/subscribe:
+    post:
+      tags: [Events]
+      operationId: subscribeToEvents
+      summary: Subscribe to events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event_types, callback_url]
+              properties:
+                event_types:
+                  type: array
+                  items:
+                    type: string
+                callback_url:
+                  type: string
+                  format: uri
+                filters:
+                  type: object
+                  additionalProperties:
+                    type: string
+      responses:
+        '201':
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscription_id:
+                    type: string
+                    format: uuid
+                  event_types:
+                    type: array
+                    items:
+                      type: string
+                  callback_url:
+                    type: string
+                    format: uri
+                  status:
+                    type: string
+                    example: active
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /events/{event_id}:
+    parameters:
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Events]
+      operationId: getEvent
+      summary: Get event details
+      responses:
+        '200':
+          description: Event details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ─────────────────────────────────────────────
+  # INTEGRATIONS
+  # ─────────────────────────────────────────────
+  /integrations:
+    get:
+      tags: [Integrations]
+      operationId: listIntegrations
+      summary: List integrations
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: platform
+          in: query
+          schema:
+            $ref: '#/components/schemas/AgentPlatformEnum'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/IntegrationStatusEnum'
+      responses:
+        '200':
+          description: Paginated integrations
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Integration'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Integrations]
+      operationId: createIntegration
+      summary: Create integration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationCreate'
+      responses:
+        '201':
+          description: Integration created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Integration'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /integrations/{integration_id}:
+    parameters:
+      - name: integration_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Integrations]
+      operationId: getIntegration
+      summary: Get integration details
+      responses:
+        '200':
+          description: Integration details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Integration'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Integrations]
+      operationId: updateIntegration
+      summary: Update integration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationCreate'
+      responses:
+        '200':
+          description: Integration updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Integration'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Integrations]
+      operationId: deleteIntegration
+      summary: Delete integration
+      responses:
+        '204':
+          description: Integration deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /integrations/{integration_id}/sync:
+    parameters:
+      - name: integration_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Integrations]
+      operationId: triggerSync
+      summary: Trigger integration sync
+      responses:
+        '202':
+          description: Sync initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sync_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    example: running
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /integrations/webhooks:
+    post:
+      tags: [Integrations]
+      operationId: registerWebhook
+      summary: Register webhook endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source, event_types]
+              properties:
+                source:
+                  type: string
+                  description: Source platform identifier
+                event_types:
+                  type: array
+                  items:
+                    type: string
+                secret:
+                  type: string
+                  description: Webhook signing secret
+      responses:
+        '201':
+          description: Webhook registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  webhook_id:
+                    type: string
+                    format: uuid
+                  webhook_url:
+                    type: string
+                    format: uri
+                  secret:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /integrations/sdk/register:
+    post:
+      tags: [Integrations]
+      operationId: registerSdkAgent
+      summary: Register agent via SDK
+      description: Used by the AETHER SDK to register an agent and obtain credentials.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentCreate'
+      responses:
+        '201':
+          description: Agent registered with credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agent:
+                    $ref: '#/components/schemas/Agent'
+                  credentials:
+                    type: object
+                    properties:
+                      api_key:
+                        type: string
+                      webhook_url:
+                        type: string
+                        format: uri
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  # ─────────────────────────────────────────────
+  # AUDIT
+  # ─────────────────────────────────────────────
+  /audit/logs:
+    get:
+      tags: [Audit]
+      operationId: listAuditLogs
+      summary: List audit logs
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: actor_id
+          in: query
+          schema:
+            type: string
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: resource_type
+          in: query
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Paginated audit logs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AuditLog'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /audit/reports:
+    get:
+      tags: [Audit]
+      operationId: listReports
+      summary: List audit reports
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+      responses:
+        '200':
+          description: Paginated reports
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AuditReport'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Audit]
+      operationId: generateReport
+      summary: Generate audit report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [report_type]
+              properties:
+                report_type:
+                  type: string
+                  enum: [compliance, risk, cost, activity, executive]
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                framework_id:
+                  type: string
+                  format: uuid
+                department_id:
+                  type: string
+                  format: uuid
+                format:
+                  type: string
+                  enum: [pdf, csv, json]
+                  default: pdf
+      responses:
+        '202':
+          description: Report generation initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  report_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    example: generating
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /audit/reports/{report_id}:
+    parameters:
+      - name: report_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Audit]
+      operationId: getReport
+      summary: Get audit report
+      responses:
+        '200':
+          description: Report details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditReport'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /audit/executive-summary:
+    get:
+      tags: [Audit]
+      operationId: getExecutiveSummary
+      summary: Get executive summary
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [week, month, quarter]
+            default: month
+      responses:
+        '200':
+          description: Executive summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  period:
+                    type: string
+                  total_agents:
+                    type: integer
+                  active_agents:
+                    type: integer
+                  total_violations:
+                    type: integer
+                  open_violations:
+                    type: integer
+                  compliance_score:
+                    type: number
+                    format: float
+                  total_cost:
+                    type: number
+                    format: float
+                  risk_distribution:
+                    type: object
+                    properties:
+                      critical:
+                        type: integer
+                      high:
+                        type: integer
+                      medium:
+                        type: integer
+                      low:
+                        type: integer
+                      minimal:
+                        type: integer
+                  top_risks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        agent_name:
+                          type: string
+                        risk_score:
+                          type: number
+                        risk_level:
+                          $ref: '#/components/schemas/RiskLevelEnum'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─────────────────────────────────────────────
+  # KNOWLEDGE GRAPH
+  # ─────────────────────────────────────────────
+  /knowledge-graph/nodes:
+    get:
+      tags: [Knowledge Graph]
+      operationId: listNodes
+      summary: List knowledge graph nodes
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: node_type
+          in: query
+          schema:
+            type: string
+            enum: [Agent, Platform, Department, User, Policy, Risk, DataSource, Credential, ComplianceFramework]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated nodes
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/KnowledgeGraphNode'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Knowledge Graph]
+      operationId: createNode
+      summary: Create knowledge graph node
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KnowledgeGraphNodeCreate'
+      responses:
+        '201':
+          description: Node created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeGraphNode'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /knowledge-graph/nodes/{node_id}:
+    parameters:
+      - name: node_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Knowledge Graph]
+      operationId: getNode
+      summary: Get node details
+      responses:
+        '200':
+          description: Node details with connected edges
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeGraphNode'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /knowledge-graph/edges:
+    get:
+      tags: [Knowledge Graph]
+      operationId: listEdges
+      summary: List knowledge graph edges
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: edge_type
+          in: query
+          schema:
+            type: string
+            enum: [DEPLOYED_ON, OWNED_BY, BELONGS_TO, GOVERNED_BY, ACCESSES, HAS_CREDENTIAL, COMMUNICATES_WITH, DEPENDS_ON, VIOLATES]
+        - name: source_node_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: target_node_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Paginated edges
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/KnowledgeGraphEdge'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Knowledge Graph]
+      operationId: createEdge
+      summary: Create knowledge graph edge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KnowledgeGraphEdgeCreate'
+      responses:
+        '201':
+          description: Edge created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeGraphEdge'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /knowledge-graph/query:
+    post:
+      tags: [Knowledge Graph]
+      operationId: queryGraph
+      summary: Execute graph query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GraphQuery'
+      responses:
+        '200':
+          description: Query results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nodes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/KnowledgeGraphNode'
+                  edges:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/KnowledgeGraphEdge'
+                  total_nodes:
+                    type: integer
+                  total_edges:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  # ─────────────────────────────────────────────
+  # AUTH
+  # ─────────────────────────────────────────────
+  /auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      summary: Login with Entra ID
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/token:
+    post:
+      tags: [Auth]
+      operationId: getToken
+      summary: Get access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [grant_type]
+              properties:
+                grant_type:
+                  type: string
+                  enum: [authorization_code, client_credentials]
+                code:
+                  type: string
+                redirect_uri:
+                  type: string
+                  format: uri
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+      responses:
+        '200':
+          description: Token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refreshToken
+      summary: Refresh access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      operationId: getCurrentUser
+      summary: Get current user profile
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      summary: Logout and invalidate tokens
+      responses:
+        '204':
+          description: Logged out
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+# ═══════════════════════════════════════════════
+# COMPONENTS
+# ═══════════════════════════════════════════════
+components:
+  # ─── Security Schemes ───────────────────────
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token issued by Azure Entra ID
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://login.microsoftonline.com/common/oauth2/v2.0/authorize
+          tokenUrl: https://login.microsoftonline.com/common/oauth2/v2.0/token
+          scopes:
+            openid: OpenID Connect
+            profile: User profile
+            email: Email address
+            api://aether-platform/agents.read: Read agents
+            api://aether-platform/agents.write: Write agents
+            api://aether-platform/admin: Full admin access
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Platform-issued API key
+
+  # ─── Parameters ─────────────────────────────
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Page number (1-indexed)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSizeParam:
+      name: page_size
+      in: query
+      description: Number of items per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    SortByParam:
+      name: sort_by
+      in: query
+      description: Field to sort by
+      schema:
+        type: string
+        default: created_at
+    SortOrderParam:
+      name: sort_order
+      in: query
+      description: Sort order
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: desc
+    AgentIdParam:
+      name: agent_id
+      in: path
+      required: true
+      description: Agent UUID
+      schema:
+        type: string
+        format: uuid
+
+  # ─── Responses ──────────────────────────────
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: UNAUTHORIZED
+              message: Authentication required
+              details: []
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: NOT_FOUND
+              message: The requested resource was not found
+              details: []
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  # ─── Schemas ────────────────────────────────
+  schemas:
+    # --- Enums ---
+    AgentStatusEnum:
+      type: string
+      enum: [discovered, onboarding, active, inactive, suspended, offboarded, decommissioned]
+    AgentPlatformEnum:
+      type: string
+      enum: [copilot_studio, agentforce, databricks, aws_bedrock, google_vertex, langchain, langgraph, autogen, custom]
+    AgentEnvironmentEnum:
+      type: string
+      enum: [production, staging, development, testing]
+    MonitoringMethodEnum:
+      type: string
+      enum: [connector_pull, sdk_push, webhook, hybrid]
+    RiskLevelEnum:
+      type: string
+      enum: [critical, high, medium, low, minimal]
+    ComplianceStatusEnum:
+      type: string
+      enum: [compliant, non_compliant, partially_compliant, under_review, not_assessed]
+    PolicyEnforcementEnum:
+      type: string
+      enum: [enforce, warn, audit, disabled]
+    EventSeverityEnum:
+      type: string
+      enum: [critical, high, medium, low, info]
+    IntegrationStatusEnum:
+      type: string
+      enum: [active, inactive, error, configuring]
+    ScanStatusEnum:
+      type: string
+      enum: [pending, running, completed, failed]
+    CredentialTypeEnum:
+      type: string
+      enum: [api_key, oauth_token, service_account, managed_identity, certificate]
+    ViolationStatusEnum:
+      type: string
+      enum: [open, acknowledged, mitigating, resolved, false_positive]
+    FindingSeverityEnum:
+      type: string
+      enum: [critical, high, medium, low, informational]
+
+    # --- Core Schemas ---
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        external_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        platform:
+          $ref: '#/components/schemas/AgentPlatformEnum'
+        environment:
+          $ref: '#/components/schemas/AgentEnvironmentEnum'
+        status:
+          $ref: '#/components/schemas/AgentStatusEnum'
+        version:
+          type: string
+        endpoint_url:
+          type: string
+          format: uri
+        region:
+          type: string
+        runtime:
+          type: string
+        owner_id:
+          type: string
+          format: uuid
+        department_id:
+          type: string
+          format: uuid
+        monitoring_method:
+          $ref: '#/components/schemas/MonitoringMethodEnum'
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+        metadata:
+          type: object
+        onboarded_at:
+          type: string
+          format: date-time
+          nullable: true
+        offboarded_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AgentCreate:
+      type: object
+      required: [name, platform]
+      properties:
+        external_id:
+          type: string
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 2000
+        platform:
+          $ref: '#/components/schemas/AgentPlatformEnum'
+        environment:
+          $ref: '#/components/schemas/AgentEnvironmentEnum'
+        endpoint_url:
+          type: string
+          format: uri
+        region:
+          type: string
+        runtime:
+          type: string
+        version:
+          type: string
+        owner_id:
+          type: string
+          format: uuid
+        department_id:
+          type: string
+          format: uuid
+        monitoring_method:
+          $ref: '#/components/schemas/MonitoringMethodEnum'
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+        metadata:
+          type: object
+        capabilities:
+          type: array
+          items:
+            type: string
+        data_access:
+          type: array
+          items:
+            type: string
+        pii_access:
+          type: boolean
+          default: false
+        financial_access:
+          type: boolean
+          default: false
+        external_access:
+          type: boolean
+          default: false
+
+    AgentUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        environment:
+          $ref: '#/components/schemas/AgentEnvironmentEnum'
+        status:
+          $ref: '#/components/schemas/AgentStatusEnum'
+        endpoint_url:
+          type: string
+          format: uri
+        region:
+          type: string
+        runtime:
+          type: string
+        version:
+          type: string
+        owner_id:
+          type: string
+          format: uuid
+        department_id:
+          type: string
+          format: uuid
+        monitoring_method:
+          $ref: '#/components/schemas/MonitoringMethodEnum'
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+        metadata:
+          type: object
+
+    AgentActivity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        activity_type:
+          type: string
+          enum: [inference, tool_call, data_access, api_call, file_operation, user_interaction]
+        description:
+          type: string
+        input_summary:
+          type: string
+        output_summary:
+          type: string
+        tokens_used:
+          type: integer
+        latency_ms:
+          type: integer
+        was_successful:
+          type: boolean
+        error_message:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+        occurred_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    AgentMetrics:
+      type: object
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        period:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        metrics:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              values:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    timestamp:
+                      type: string
+                      format: date-time
+                    value:
+                      type: number
+              unit:
+                type: string
+              aggregate:
+                type: object
+                properties:
+                  avg:
+                    type: number
+                  min:
+                    type: number
+                  max:
+                    type: number
+                  p95:
+                    type: number
+                  p99:
+                    type: number
+
+    AgentHealth:
+      type: object
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        is_healthy:
+          type: boolean
+        uptime_percentage:
+          type: number
+          format: float
+        avg_latency_ms:
+          type: number
+          format: float
+        p95_latency_ms:
+          type: number
+          format: float
+        p99_latency_ms:
+          type: number
+          format: float
+        success_rate:
+          type: number
+          format: float
+        error_rate:
+          type: number
+          format: float
+        last_heartbeat_at:
+          type: string
+          format: date-time
+        last_error_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_error_message:
+          type: string
+          nullable: true
+        health_details:
+          type: object
+        recorded_at:
+          type: string
+          format: date-time
+
+    # --- Governance Schemas ---
+    Policy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        enforcement:
+          $ref: '#/components/schemas/PolicyEnforcementEnum'
+        rules:
+          type: object
+        scope:
+          type: object
+        priority:
+          type: integer
+        is_active:
+          type: boolean
+        created_by:
+          type: string
+          format: uuid
+        approved_by:
+          type: string
+          format: uuid
+          nullable: true
+        effective_from:
+          type: string
+          format: date-time
+        effective_until:
+          type: string
+          format: date-time
+          nullable: true
+        version:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PolicyCreate:
+      type: object
+      required: [name, category, enforcement, rules]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        enforcement:
+          $ref: '#/components/schemas/PolicyEnforcementEnum'
+        rules:
+          type: object
+        scope:
+          type: object
+        priority:
+          type: integer
+          default: 0
+        is_active:
+          type: boolean
+          default: true
+        effective_from:
+          type: string
+          format: date-time
+        effective_until:
+          type: string
+          format: date-time
+
+    Violation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        policy_id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        violation_status:
+          $ref: '#/components/schemas/ViolationStatusEnum'
+        severity:
+          $ref: '#/components/schemas/EventSeverityEnum'
+        description:
+          type: string
+        evidence:
+          type: object
+        remediation_steps:
+          type: string
+        resolved_by:
+          type: string
+          format: uuid
+          nullable: true
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        resolution_notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ViolationUpdate:
+      type: object
+      properties:
+        violation_status:
+          $ref: '#/components/schemas/ViolationStatusEnum'
+        resolution_notes:
+          type: string
+
+    # --- Compliance Schemas ---
+    ComplianceFramework:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        authority:
+          type: string
+        effective_date:
+          type: string
+          format: date
+        is_active:
+          type: boolean
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ComplianceFrameworkCreate:
+      type: object
+      required: [name, version, authority]
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        authority:
+          type: string
+        effective_date:
+          type: string
+          format: date
+        is_active:
+          type: boolean
+          default: true
+        metadata:
+          type: object
+
+    ComplianceControl:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        framework_id:
+          type: string
+          format: uuid
+        control_id_code:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        requirements:
+          type: object
+        test_procedures:
+          type: object
+        is_automated:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    ComplianceFinding:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        control_id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        severity:
+          $ref: '#/components/schemas/FindingSeverityEnum'
+        title:
+          type: string
+        description:
+          type: string
+        evidence:
+          type: object
+        remediation:
+          type: string
+        status:
+          $ref: '#/components/schemas/ViolationStatusEnum'
+        found_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # --- Risk Schemas ---
+    RiskAssessment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        overall_risk_level:
+          $ref: '#/components/schemas/RiskLevelEnum'
+        risk_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        data_sensitivity_score:
+          type: number
+          format: float
+        autonomy_score:
+          type: number
+          format: float
+        impact_score:
+          type: number
+          format: float
+        access_scope_score:
+          type: number
+          format: float
+        pii_access:
+          type: boolean
+        financial_access:
+          type: boolean
+        external_access:
+          type: boolean
+        risk_factors:
+          type: object
+        assessed_by:
+          type: string
+        assessed_at:
+          type: string
+          format: date-time
+        next_assessment_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    RiskScoreSummary:
+      type: object
+      properties:
+        total_agents:
+          type: integer
+        average_risk_score:
+          type: number
+          format: float
+        distribution:
+          type: object
+          properties:
+            critical:
+              type: integer
+            high:
+              type: integer
+            medium:
+              type: integer
+            low:
+              type: integer
+            minimal:
+              type: integer
+        trend:
+          type: string
+          enum: [improving, stable, degrading]
+
+    # --- Cost Schemas ---
+    CostSummary:
+      type: object
+      properties:
+        period:
+          type: string
+        total_cost:
+          type: number
+          format: float
+        token_cost:
+          type: number
+          format: float
+        compute_cost:
+          type: number
+          format: float
+        api_call_cost:
+          type: number
+          format: float
+        currency:
+          type: string
+          default: USD
+        cost_by_group:
+          type: array
+          items:
+            type: object
+            properties:
+              group_id:
+                type: string
+              group_name:
+                type: string
+              total_cost:
+                type: number
+                format: float
+        trend_percentage:
+          type: number
+          format: float
+          description: Cost change percentage vs. previous period
+
+    CostDetail:
+      type: object
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+        entity_type:
+          type: string
+          enum: [agent, department]
+        entity_name:
+          type: string
+        total_cost:
+          type: number
+          format: float
+        token_cost:
+          type: number
+          format: float
+        compute_cost:
+          type: number
+          format: float
+        api_call_cost:
+          type: number
+          format: float
+        storage_cost:
+          type: number
+          format: float
+        total_tokens:
+          type: integer
+        total_api_calls:
+          type: integer
+        currency:
+          type: string
+          default: USD
+        daily_breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              cost:
+                type: number
+                format: float
+
+    Budget:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        scope:
+          type: string
+          enum: [tenant, department, agent]
+        scope_id:
+          type: string
+          format: uuid
+        budget_amount:
+          type: number
+          format: float
+        spent_amount:
+          type: number
+          format: float
+        remaining_amount:
+          type: number
+          format: float
+        utilization_percentage:
+          type: number
+          format: float
+        currency:
+          type: string
+          default: USD
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        alert_threshold_percentage:
+          type: number
+          format: float
+          default: 80
+
+    BudgetCreate:
+      type: object
+      required: [scope, budget_amount, period_start, period_end]
+      properties:
+        scope:
+          type: string
+          enum: [tenant, department, agent]
+        scope_id:
+          type: string
+          format: uuid
+        budget_amount:
+          type: number
+          format: float
+        currency:
+          type: string
+          default: USD
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        alert_threshold_percentage:
+          type: number
+          format: float
+          default: 80
+
+    # --- Identity Schemas ---
+    Credential:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        credential_type:
+          $ref: '#/components/schemas/CredentialTypeEnum'
+        credential_identifier:
+          type: string
+        issued_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        last_rotated_at:
+          type: string
+          format: date-time
+        rotation_policy_days:
+          type: integer
+        is_active:
+          type: boolean
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+
+    CredentialCreate:
+      type: object
+      required: [agent_id, credential_type]
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        credential_type:
+          $ref: '#/components/schemas/CredentialTypeEnum'
+        rotation_policy_days:
+          type: integer
+          default: 90
+        metadata:
+          type: object
+
+    # --- Event Schema ---
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        source:
+          type: string
+        severity:
+          $ref: '#/components/schemas/EventSeverityEnum'
+        payload:
+          type: object
+        correlation_id:
+          type: string
+          format: uuid
+        processed:
+          type: boolean
+        processed_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    # --- Integration Schemas ---
+    Integration:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        platform:
+          $ref: '#/components/schemas/AgentPlatformEnum'
+        integration_status:
+          $ref: '#/components/schemas/IntegrationStatusEnum'
+        connection_config:
+          type: object
+        last_sync_at:
+          type: string
+          format: date-time
+          nullable: true
+        sync_frequency_minutes:
+          type: integer
+        error_message:
+          type: string
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    IntegrationCreate:
+      type: object
+      required: [name, platform]
+      properties:
+        name:
+          type: string
+        platform:
+          $ref: '#/components/schemas/AgentPlatformEnum'
+        connection_config:
+          type: object
+          description: Platform-specific connection configuration
+        auth_config:
+          type: object
+          description: Authentication configuration (encrypted at rest)
+        sync_frequency_minutes:
+          type: integer
+          default: 15
+
+    # --- Discovery Schema ---
+    DiscoveryScan:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        integration_id:
+          type: string
+          format: uuid
+        scan_status:
+          $ref: '#/components/schemas/ScanStatusEnum'
+        platform:
+          $ref: '#/components/schemas/AgentPlatformEnum'
+        discovered_agents_count:
+          type: integer
+        new_agents_count:
+          type: integer
+        updated_agents_count:
+          type: integer
+        scan_started_at:
+          type: string
+          format: date-time
+        scan_completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        scan_results:
+          type: object
+        error_message:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    # --- Audit Schemas ---
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        actor_id:
+          type: string
+        actor_type:
+          type: string
+          enum: [user, agent, system]
+        action:
+          type: string
+        resource_type:
+          type: string
+        resource_id:
+          type: string
+        changes:
+          type: object
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    AuditReport:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        report_type:
+          type: string
+          enum: [compliance, risk, cost, activity, executive]
+        status:
+          type: string
+          enum: [generating, completed, failed]
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        download_url:
+          type: string
+          format: uri
+          nullable: true
+        summary:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+
+    # --- Knowledge Graph Schemas ---
+    KnowledgeGraphNode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        node_type:
+          type: string
+          enum: [Agent, Platform, Department, User, Policy, Risk, DataSource, Credential, ComplianceFramework]
+        entity_id:
+          type: string
+          format: uuid
+        label:
+          type: string
+        properties:
+          type: object
+        connected_edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/KnowledgeGraphEdge'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    KnowledgeGraphNodeCreate:
+      type: object
+      required: [node_type, label]
+      properties:
+        node_type:
+          type: string
+          enum: [Agent, Platform, Department, User, Policy, Risk, DataSource, Credential, ComplianceFramework]
+        entity_id:
+          type: string
+          format: uuid
+        label:
+          type: string
+        properties:
+          type: object
+
+    KnowledgeGraphEdge:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        source_node_id:
+          type: string
+          format: uuid
+        target_node_id:
+          type: string
+          format: uuid
+        edge_type:
+          type: string
+          enum: [DEPLOYED_ON, OWNED_BY, BELONGS_TO, GOVERNED_BY, ACCESSES, HAS_CREDENTIAL, COMMUNICATES_WITH, DEPENDS_ON, VIOLATES]
+        weight:
+          type: number
+          format: float
+        properties:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+
+    KnowledgeGraphEdgeCreate:
+      type: object
+      required: [source_node_id, target_node_id, edge_type]
+      properties:
+        source_node_id:
+          type: string
+          format: uuid
+        target_node_id:
+          type: string
+          format: uuid
+        edge_type:
+          type: string
+          enum: [DEPLOYED_ON, OWNED_BY, BELONGS_TO, GOVERNED_BY, ACCESSES, HAS_CREDENTIAL, COMMUNICATES_WITH, DEPENDS_ON, VIOLATES]
+        weight:
+          type: number
+          format: float
+          default: 1.0
+        properties:
+          type: object
+
+    GraphQuery:
+      type: object
+      required: [query_type]
+      properties:
+        query_type:
+          type: string
+          enum: [neighbors, path, subgraph, pattern]
+        start_node_id:
+          type: string
+          format: uuid
+        end_node_id:
+          type: string
+          format: uuid
+        edge_types:
+          type: array
+          items:
+            type: string
+        node_types:
+          type: array
+          items:
+            type: string
+        max_depth:
+          type: integer
+          default: 3
+          maximum: 10
+        filters:
+          type: object
+
+    # --- Auth Schemas ---
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        display_name:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, suspended, pending]
+        created_at:
+          type: string
+          format: date-time
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        display_name:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: string
+        permissions:
+          type: array
+          items:
+            type: string
+        preferences:
+          type: object
+        last_login_at:
+          type: string
+          format: date-time
+
+    LoginRequest:
+      type: object
+      required: [id_token]
+      properties:
+        id_token:
+          type: string
+          description: Azure Entra ID token
+        redirect_uri:
+          type: string
+          format: uri
+
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          default: Bearer
+        expires_in:
+          type: integer
+          description: Token lifetime in seconds
+        refresh_token:
+          type: string
+        scope:
+          type: string
+
+    # --- Common Schemas ---
+    PaginatedResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items: {}
+        total:
+          type: integer
+          description: Total number of items
+        page:
+          type: integer
+          description: Current page number
+        page_size:
+          type: integer
+          description: Items per page
+        total_pages:
+          type: integer
+          description: Total number of pages
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code
+            message:
+              type: string
+              description: Human-readable error message
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+                  code:
+                    type: string
+
+    BulkOperationRequest:
+      type: object
+      required: [operation, agent_ids]
+      properties:
+        operation:
+          type: string
+          enum: [onboard, offboard, suspend, activate, delete, update_tags]
+        agent_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+        parameters:
+          type: object
+          description: Operation-specific parameters
+
+    BulkOperationResponse:
+      type: object
+      properties:
+        operation:
+          type: string
+        total:
+          type: integer
+        succeeded:
+          type: integer
+        failed:
+          type: integer
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              agent_id:
+                type: string
+                format: uuid
+              status:
+                type: string
+                enum: [success, failed]
+              error:
+                type: string
+                nullable: true

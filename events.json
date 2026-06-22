@@ -1,0 +1,805 @@
+{
+  "events": [
+    {
+      "id": "EVT-00102",
+      "timestamp": "2026-06-19T08:59:36.954184+00:00",
+      "type": "AgentRunStarted",
+      "source": "Cost Agent",
+      "description": "Cost agent analyzed 1 agents in 10.7s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00103",
+      "timestamp": "2026-06-19T08:59:36.960250+00:00",
+      "type": "CostAnalyzed",
+      "source": "Cost Agent",
+      "description": "Total monthly spend: $641.0, 4 anomalies found",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00104",
+      "timestamp": "2026-06-19T08:59:36.971802+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 The 'model' field is empty for an agent with significant token usage (13M+) and monthly cost ($641). This prevents proper cost analysis and optimization.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00105",
+      "timestamp": "2026-06-19T08:59:36.982595+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 The agent's 'purpose' is 'test' but it is running in a 'Production' environment with a substantial monthly cost. This suggests a potential misconfiguration or an agent that has outlived its testing phase.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00106",
+      "timestamp": "2026-06-19T08:59:36.994402+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 The agent's 'endpoint' is 'http://localhost:8108/' and its 'region' is 'local'. This is highly unusual and problematic for a production agent, indicating a potential deployment issue, lack of scalability, or security concern.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00107",
+      "timestamp": "2026-06-19T08:59:37.002618+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 The 'certificationStatus' is 'Pending' for a production agent incurring significant costs. This indicates a governance gap and potential compliance risk.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00108",
+      "timestamp": "2026-06-19T08:59:43.763695+00:00",
+      "type": "AgentRunStarted",
+      "source": "Health Agent",
+      "description": "Health agent analyzed 1 agents in 6.72s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00109",
+      "timestamp": "2026-06-19T08:59:43.769081+00:00",
+      "type": "HealthCheckFailed",
+      "source": "Health Agent",
+      "description": "eng \u2014 Degraded: High response time: 2031.8ms; Client error: HTTP 405. The agent is reachable but responding slowly and with an incorrect status code, indicating a functional issue.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00110",
+      "timestamp": "2026-06-19T09:00:02.324896+00:00",
+      "type": "AgentRunStarted",
+      "source": "Audit Agent",
+      "description": "Audit agent analyzed 1 agents in 18.51s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00111",
+      "timestamp": "2026-06-19T09:00:02.329511+00:00",
+      "type": "AuditCompleted",
+      "source": "Audit Agent",
+      "description": "Audit completed \u2014 6 open findings, 1 critical",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00112",
+      "timestamp": "2026-06-19T09:08:31.850766+00:00",
+      "type": "AgentRunStarted",
+      "source": "Compliance Agent",
+      "description": "Compliance agent analyzed 1 agents in 11.21s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00113",
+      "timestamp": "2026-06-19T09:08:31.859308+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 Agent explicitly states 'PII Access: False', significantly reducing direct GDPR applicability. However, as a production system, general data security and governance principles should still be observed.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00114",
+      "timestamp": "2026-06-19T09:08:31.867740+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 Agent explicitly states 'Financial Access: False', indicating it does not handle or process financial data relevant to SOX compliance.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00115",
+      "timestamp": "2026-06-19T09:08:31.883219+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 Agent explicitly states 'PII Access: False', indicating it does not process Protected Health Information (PHI), thus mitigating HIPAA concerns.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00116",
+      "timestamp": "2026-06-19T09:08:31.888948+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 The agent's endpoint `http://localhost:8108/` for a 'Production' environment raises significant concerns regarding accessibility, availability, and security controls. A 'Risk Score: 0' requires further validation of underlying security assessments and controls. While PII and financial access are false, general security, availability, and processing integrity controls are still critical for a production system.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00117",
+      "timestamp": "2026-06-19T09:08:31.893472+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 The agent's endpoint `http://localhost:8108/` in a 'Production' environment and a self-reported 'Risk Score: 0' are major concerns for ISO 27001, indicating potential gaps in risk assessment, asset management, network security, and access control. The 'Purpose: test' for a production agent also suggests potential control weaknesses or lack of clear operational definition.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00118",
+      "timestamp": "2026-06-19T09:08:42.491330+00:00",
+      "type": "AgentRunStarted",
+      "source": "Risk Agent",
+      "description": "Risk agent analyzed 1 agents in 10.55s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00119",
+      "timestamp": "2026-06-19T09:08:42.500577+00:00",
+      "type": "HighRiskDetected",
+      "source": "Risk Agent",
+      "description": "eng \u2014 risk score: 85/100, Critical",
+      "severity": "critical"
+    },
+    {
+      "id": "EVT-00120",
+      "timestamp": "2026-06-19T09:08:57.008088+00:00",
+      "type": "AgentRunStarted",
+      "source": "Governance Agent",
+      "description": "Governance agent analyzed 1 agents in 14.45s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00121",
+      "timestamp": "2026-06-19T09:08:57.021650+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "eng \u2014 Agent 'eng' (AGT-0001) has a monthly cost of $641.0, which exceeds the acceptable threshold of $500.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00122",
+      "timestamp": "2026-06-19T09:08:57.034101+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "eng \u2014 Agent 'eng' (AGT-0001) uses a model/platform ('Custom Enterprise Agents' and empty model field) not found on the approved list of models.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00123",
+      "timestamp": "2026-06-19T09:08:57.042445+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "eng \u2014 Agent 'eng' (AGT-0001) has a certification status of 'Pending', indicating it's not fully certified.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00124",
+      "timestamp": "2026-06-19T09:08:57.052094+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "eng \u2014 Agent 'eng' (AGT-0001) has a purpose of 'test' but is deployed in a 'Production' environment with an 'Active' status. This suggests it might be an inactive or misconfigured agent.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00125",
+      "timestamp": "2026-06-19T09:09:10.576987+00:00",
+      "type": "AgentRunStarted",
+      "source": "Cost Agent",
+      "description": "Cost agent analyzed 1 agents in 13.46s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00126",
+      "timestamp": "2026-06-19T09:09:10.586678+00:00",
+      "type": "CostAnalyzed",
+      "source": "Cost Agent",
+      "description": "Total monthly spend: $641.0, 3 anomalies found",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00127",
+      "timestamp": "2026-06-19T09:09:10.593811+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 The 'model' field for agent 'eng' is empty. This prevents granular cost analysis, model performance comparison, and strategic model selection for optimization.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00128",
+      "timestamp": "2026-06-19T09:09:10.603017+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 Agent 'eng' has a 'Pending' certification status while operating in a 'Production' environment. This indicates a governance and compliance risk.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00129",
+      "timestamp": "2026-06-19T09:09:10.616035+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 Agent 'eng' is labeled with 'purpose': 'test' and 'criticality': 'Low' but operates in a 'Production' environment with significant monthly cost ($641) and task volume (34,508 tasks). This suggests a potential misclassification or misuse of a production resource.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00130",
+      "timestamp": "2026-06-19T09:09:31.675108+00:00",
+      "type": "AgentRunStarted",
+      "source": "Health Agent",
+      "description": "Health agent analyzed 1 agents in 21.0s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00131",
+      "timestamp": "2026-06-19T09:09:31.681053+00:00",
+      "type": "HealthCheckFailed",
+      "source": "Health Agent",
+      "description": "eng \u2014 Degraded: Endpoint returned HTTP 405 (Method Not Allowed) and exhibited high response time (2058.4ms), indicating a functional and performance issue. Historical metrics show good average latency and success rate, suggesting a specific probe or configuration problem.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00132",
+      "timestamp": "2026-06-19T09:09:45.463872+00:00",
+      "type": "AgentRunStarted",
+      "source": "Audit Agent",
+      "description": "Audit agent analyzed 1 agents in 13.73s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00133",
+      "timestamp": "2026-06-19T09:09:45.473332+00:00",
+      "type": "AuditCompleted",
+      "source": "Audit Agent",
+      "description": "Audit completed \u2014 4 open findings, 1 critical",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00134",
+      "timestamp": "2026-06-19T09:18:36.816394+00:00",
+      "type": "AgentRunStarted",
+      "source": "Compliance Agent",
+      "description": "Compliance agent analyzed 1 agents in 15.86s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00135",
+      "timestamp": "2026-06-19T09:18:36.831121+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 Agent explicitly states 'PII Access: False', which significantly reduces direct GDPR applicability regarding personal data processing.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00136",
+      "timestamp": "2026-06-19T09:18:36.841130+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 As a production system, general data governance principles (e.g., data minimization, security by design) are still relevant to ensure no accidental PII processing or vulnerabilities that could expose PII in other systems.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00137",
+      "timestamp": "2026-06-19T09:18:36.858429+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 The 'test' purpose in a 'Production' environment requires further clarification to ensure no actual personal data is inadvertently processed or stored, even if not directly accessed by the agent.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00138",
+      "timestamp": "2026-06-19T09:18:36.870070+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 Agent explicitly states 'Financial Access: False', indicating it does not directly process or impact financial data or reporting.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00139",
+      "timestamp": "2026-06-19T09:18:36.885568+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 Therefore, direct SOX compliance requirements related to financial controls are not applicable to this agent's stated scope.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00140",
+      "timestamp": "2026-06-19T09:18:36.896215+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 Agent explicitly states 'PII Access: False', which implies no access to Protected Health Information (PHI).",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00141",
+      "timestamp": "2026-06-19T09:18:36.902599+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 Therefore, direct HIPAA compliance requirements are not applicable to this agent's operations.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00142",
+      "timestamp": "2026-06-19T09:18:36.913580+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 As a production system, SOC 2 principles (Security, Availability, Processing Integrity) are highly relevant.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00143",
+      "timestamp": "2026-06-19T09:18:36.924008+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 While 'PII Access: False' and 'Financial Access: False' mitigate Privacy and Confidentiality concerns, robust controls for system security (e.g., access control, vulnerability management, logging, monitoring), availability (e.g., backup, disaster recovery), and processing integrity (e.g., error handling, data validation) are expected.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00144",
+      "timestamp": "2026-06-19T09:18:36.935114+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 The 'Endpoint: http://localhost:8108/' is ambiguous for a production system; if it truly means local access only, then the security of the host system is critical. If it's a placeholder for an externally accessible endpoint, this is a significant security concern.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00145",
+      "timestamp": "2026-06-19T09:18:47.688037+00:00",
+      "type": "AgentRunStarted",
+      "source": "Risk Agent",
+      "description": "Risk agent analyzed 1 agents in 10.69s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00146",
+      "timestamp": "2026-06-19T09:18:47.693847+00:00",
+      "type": "HighRiskDetected",
+      "source": "Risk Agent",
+      "description": "eng \u2014 risk score: 70/100, High",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00147",
+      "timestamp": "2026-06-19T09:19:02.664063+00:00",
+      "type": "AgentRunStarted",
+      "source": "Governance Agent",
+      "description": "Governance agent analyzed 1 agents in 14.92s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00148",
+      "timestamp": "2026-06-19T09:19:02.671153+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "eng \u2014 Agent 'eng' (AGT-0001) has a monthly cost of $641.0, which exceeds the acceptable threshold of $500.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00149",
+      "timestamp": "2026-06-19T09:19:02.679398+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "eng \u2014 Agent 'eng' (AGT-0001) uses model '' and platform 'Custom Enterprise Agents', which are not on the approved model list.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00150",
+      "timestamp": "2026-06-19T09:19:02.685354+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "eng \u2014 Agent 'eng' (AGT-0001) has a 'Pending' certification status, indicating it's not fully certified.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00151",
+      "timestamp": "2026-06-19T09:19:02.690391+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "eng \u2014 Agent 'eng' (AGT-0001) has a purpose of 'test' but is deployed in a 'Production' environment, suggesting potential underutilization or misconfiguration.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00152",
+      "timestamp": "2026-06-19T09:19:18.110328+00:00",
+      "type": "AgentRunStarted",
+      "source": "Cost Agent",
+      "description": "Cost agent analyzed 1 agents in 15.37s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00153",
+      "timestamp": "2026-06-19T09:19:18.117671+00:00",
+      "type": "CostAnalyzed",
+      "source": "Cost Agent",
+      "description": "Total monthly spend: $641.0, 4 anomalies found",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00154",
+      "timestamp": "2026-06-19T09:19:18.126463+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 The 'eng' agent is deployed in a 'Production' environment but its stated 'purpose' is 'test'. This indicates a potential misclassification, misuse of resources, or a governance oversight.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00155",
+      "timestamp": "2026-06-19T09:19:18.138765+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 The 'model' field for the 'eng' agent is empty. Without knowing the specific AI model being used, it's impossible to analyze its cost efficiency, compare against alternatives, or understand the underlying cost drivers.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00156",
+      "timestamp": "2026-06-19T09:19:18.149321+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 The 'eng' agent is listed with 'region: \"local\"' despite handling a high volume of tasks (35,928) and being in a 'Production' environment. This setup might lack enterprise-grade scalability, reliability, and cost optimization features typically found in cloud regions.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00157",
+      "timestamp": "2026-06-19T09:19:18.157777+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 The 'certificationStatus' for the 'eng' agent is 'Pending'. For an agent operating in a production environment with significant usage, a pending certification status indicates a governance and compliance gap.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00158",
+      "timestamp": "2026-06-19T09:19:26.833208+00:00",
+      "type": "AgentRunStarted",
+      "source": "Health Agent",
+      "description": "Health agent analyzed 1 agents in 8.62s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00159",
+      "timestamp": "2026-06-19T09:19:26.838825+00:00",
+      "type": "HealthCheckFailed",
+      "source": "Health Agent",
+      "description": "eng \u2014 Unhealthy: Endpoint returned HTTP 405 (Method Not Allowed) and exhibited very high latency (2051.5ms), indicating a critical functional and performance issue.",
+      "severity": "critical"
+    },
+    {
+      "id": "EVT-00160",
+      "timestamp": "2026-06-19T09:19:47.451945+00:00",
+      "type": "AgentRunStarted",
+      "source": "Audit Agent",
+      "description": "Audit agent analyzed 1 agents in 20.56s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00161",
+      "timestamp": "2026-06-19T09:19:47.461299+00:00",
+      "type": "AuditCompleted",
+      "source": "Audit Agent",
+      "description": "Audit completed \u2014 6 open findings, 1 critical",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00162",
+      "timestamp": "2026-06-19T09:28:38.872384+00:00",
+      "type": "AgentRunStarted",
+      "source": "Compliance Agent",
+      "description": "Compliance agent analyzed 1 agents in 17.92s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00163",
+      "timestamp": "2026-06-19T09:28:38.879801+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 Agent explicitly states 'PII Access: False', significantly reducing GDPR applicability. However, 'Purpose: test' in a 'Production' environment warrants review for data handling policies, even without PII.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00164",
+      "timestamp": "2026-06-19T09:28:38.887959+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 Agent explicitly states 'Financial Access: False', making SOX largely inapplicable. No direct impact on financial reporting identified.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00165",
+      "timestamp": "2026-06-19T09:28:38.894709+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 Agent explicitly states 'PII Access: False', indicating no access to Protected Health Information (PHI), making HIPAA inapplicable.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00166",
+      "timestamp": "2026-06-19T09:28:38.902237+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 'Endpoint: http://localhost:8108/' for a 'Production' agent raises significant security and availability concerns regarding network configuration and access controls.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00167",
+      "timestamp": "2026-06-19T09:28:38.908102+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 'Purpose: test' in a 'Production' environment indicates a lack of proper environment segregation and processing integrity controls, critical for SOC 2.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00168",
+      "timestamp": "2026-06-19T09:28:38.913811+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 'Endpoint: http://localhost:8108/' in 'Production' suggests potential weaknesses in network security and secure configuration (A.13).",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00169",
+      "timestamp": "2026-06-19T09:28:38.924939+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 'Purpose: test' in 'Production' indicates a lack of proper operational security and change management (A.12, A.14).",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00170",
+      "timestamp": "2026-06-19T09:28:38.936957+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "eng \u2014 A 'Risk Score: 0' given these issues suggests an inadequate risk assessment process (A.8).",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00171",
+      "timestamp": "2026-06-19T09:28:48.345494+00:00",
+      "type": "AgentRunStarted",
+      "source": "Risk Agent",
+      "description": "Risk agent analyzed 1 agents in 9.31s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00172",
+      "timestamp": "2026-06-19T09:28:48.358917+00:00",
+      "type": "RiskAssessed",
+      "source": "Risk Agent",
+      "description": "eng \u2014 risk score: 55/100 (Medium)",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00173",
+      "timestamp": "2026-06-19T09:29:08.834322+00:00",
+      "type": "AgentRunStarted",
+      "source": "Governance Agent",
+      "description": "Governance agent analyzed 1 agents in 20.4s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00174",
+      "timestamp": "2026-06-19T09:29:08.848750+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "eng \u2014 Monthly cost $641.0 exceeds $500 threshold.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00175",
+      "timestamp": "2026-06-19T09:29:08.861010+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "eng \u2014 Model/platform 'custom enterprise agents' is not on the approved list.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00176",
+      "timestamp": "2026-06-19T09:29:08.869055+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "eng \u2014 Certification status is 'pending'.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00177",
+      "timestamp": "2026-06-19T09:29:24.904196+00:00",
+      "type": "AgentRunStarted",
+      "source": "Cost Agent",
+      "description": "Cost agent analyzed 1 agents in 15.98s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00178",
+      "timestamp": "2026-06-19T09:29:24.909081+00:00",
+      "type": "CostAnalyzed",
+      "source": "Cost Agent",
+      "description": "Total monthly spend: $641.0, 4 anomalies found",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00179",
+      "timestamp": "2026-06-19T09:29:24.915855+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 High spend and token usage for an agent explicitly labeled with 'test' purpose. This suggests potential miscategorization or an unoptimized testing environment.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00180",
+      "timestamp": "2026-06-19T09:29:24.924533+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 The 'model' field is empty, which prevents detailed analysis of model-specific cost drivers and optimization opportunities.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00181",
+      "timestamp": "2026-06-19T09:29:24.929714+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 Agent is running in a 'local' region with significant usage, which might indicate a non-standard deployment for a high-usage agent or an unoptimized local test setup.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00182",
+      "timestamp": "2026-06-19T09:29:24.935785+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 Certification status is 'Pending' for an active agent with substantial monthly cost and task execution, posing potential governance or compliance risks.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00183",
+      "timestamp": "2026-06-19T09:29:34.548220+00:00",
+      "type": "AgentRunStarted",
+      "source": "Health Agent",
+      "description": "Health agent analyzed 1 agents in 9.56s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00184",
+      "timestamp": "2026-06-19T09:29:34.562279+00:00",
+      "type": "HealthCheckFailed",
+      "source": "Health Agent",
+      "description": "eng \u2014 Degraded: The agent is experiencing high response times (2042.2ms) and returning a client error (HTTP 405 Method Not Allowed), indicating functional issues that require immediate attention.",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00185",
+      "timestamp": "2026-06-19T09:29:52.952588+00:00",
+      "type": "AgentRunStarted",
+      "source": "Audit Agent",
+      "description": "Audit agent analyzed 1 agents in 18.33s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00186",
+      "timestamp": "2026-06-19T09:29:52.967518+00:00",
+      "type": "AuditCompleted",
+      "source": "Audit Agent",
+      "description": "Audit completed \u2014 6 open findings, 2 critical",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00187",
+      "timestamp": "2026-06-19T09:38:37.621750+00:00",
+      "type": "AgentRunStarted",
+      "source": "Compliance Agent",
+      "description": "Compliance agent analyzed 1 agents in 16.98s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00188",
+      "timestamp": "2026-06-19T09:38:49.553785+00:00",
+      "type": "AgentRunStarted",
+      "source": "Risk Agent",
+      "description": "Risk agent analyzed 1 agents in 11.88s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00189",
+      "timestamp": "2026-06-19T09:38:49.562712+00:00",
+      "type": "HighRiskDetected",
+      "source": "Risk Agent",
+      "description": "eng \u2014 risk score: 75/100, High",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00190",
+      "timestamp": "2026-06-19T09:39:02.539238+00:00",
+      "type": "AgentRunStarted",
+      "source": "Governance Agent",
+      "description": "Governance agent analyzed 1 agents in 12.91s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00191",
+      "timestamp": "2026-06-19T09:39:02.545261+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "eng \u2014 Agent AGT-0001 (eng) has a monthly cost of 641.0, which exceeds the acceptable threshold of 500.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00192",
+      "timestamp": "2026-06-19T09:39:02.551671+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "eng \u2014 Agent AGT-0001 (eng) is using a model/platform ('Custom Enterprise Agents') not found on the approved list.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00193",
+      "timestamp": "2026-06-19T09:39:02.559206+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "eng \u2014 Agent AGT-0001 (eng) has a certification status of 'Pending', indicating it's not fully certified.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-00194",
+      "timestamp": "2026-06-19T09:39:28.214054+00:00",
+      "type": "AgentRunStarted",
+      "source": "Cost Agent",
+      "description": "Cost agent analyzed 1 agents in 25.6s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00195",
+      "timestamp": "2026-06-19T09:39:28.220156+00:00",
+      "type": "CostAnalyzed",
+      "source": "Cost Agent",
+      "description": "Total monthly spend: $641.0, 2 anomalies found",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00196",
+      "timestamp": "2026-06-19T09:39:28.226384+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 High token usage",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00197",
+      "timestamp": "2026-06-19T09:39:28.230416+00:00",
+      "type": "CostAnomaly",
+      "source": "Cost Agent",
+      "description": "eng \u2014 No model specified",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00198",
+      "timestamp": "2026-06-19T09:39:37.973787+00:00",
+      "type": "AgentRunStarted",
+      "source": "Health Agent",
+      "description": "Health agent analyzed 1 agents in 9.69s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00199",
+      "timestamp": "2026-06-19T09:39:37.984876+00:00",
+      "type": "HealthCheckFailed",
+      "source": "Health Agent",
+      "description": "eng \u2014 Degraded: High response time: 2055.8ms; Client error: HTTP 405",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-00200",
+      "timestamp": "2026-06-19T09:40:17.676672+00:00",
+      "type": "AgentRunStarted",
+      "source": "Audit Agent",
+      "description": "Audit agent analyzed 1 agents in 39.65s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-00201",
+      "timestamp": "2026-06-19T09:40:17.683926+00:00",
+      "type": "AuditCompleted",
+      "source": "Audit Agent",
+      "description": "Audit completed \u2014 4 open findings, 1 critical",
+      "severity": "high"
+    }
+  ],
+  "counter": 201
+}
