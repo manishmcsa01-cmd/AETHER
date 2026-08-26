@@ -36,6 +36,13 @@ sys.path.insert(0, PROJECT_ROOT)
 
 import llm_gateway
 from agents import compliance_agent, risk_agent, governance_agent, audit_agent, cost_agent, health_agent
+from trust import api as trust_api
+from trust import policy as trust_policy
+
+# DEMO_MODE (from .env): when true, simulated task/metric data keeps the demo
+# dashboards alive. When false, only real recorded activity is stored.
+def _demo_mode():
+    return os.environ.get('DEMO_MODE', 'true').strip().lower() in ('1', 'true', 'yes', 'on')
 
 # ── SQLite Database Configuration & Setup ──────────────────────
 
@@ -125,9 +132,41 @@ def _init_db():
             cost REAL,
             tokens INTEGER,
             task_type TEXT,
-            description TEXT
+            description TEXT,
+            model TEXT,
+            input_tokens INTEGER,
+            output_tokens INTEGER
         )
     ''')
+    
+    # 5. Create a2a_transactions table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS a2a_transactions (
+            id TEXT PRIMARY KEY,
+            timestamp TEXT,
+            sender_id TEXT,
+            receiver_id TEXT,
+            tokens_requested INTEGER,
+            cost REAL,
+            status TEXT,
+            decline_reason TEXT,
+            compliance_check TEXT
+        )
+    ''')
+    
+    # Execute migrations to add new columns if the database already exists
+    try:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN model TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN input_tokens INTEGER")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN output_tokens INTEGER")
+    except sqlite3.OperationalError:
+        pass
     
     conn.commit()
     conn.close()
@@ -177,6 +216,286 @@ def _sync_json_to_sqlite():
             conn.commit()
             conn.close()
 
+def get_model_details(model_field, platform):
+    model = (model_field or "").strip()
+    plat = (platform or "").lower()
+    
+    # 1. Identify LLM model name
+    if not model:
+        if "openai" in plat:
+            model = "gpt-4o"
+        elif "microsoft" in plat or "copilot" in plat:
+            model = "gpt-4"
+        elif "snowflake" in plat:
+            model = "snowflake-cortex"
+        elif "databricks" in plat:
+            model = "databricks-dbrx"
+        else:
+            model = "claude-3-5-sonnet"
+            
+    # 2. Get rates and limits based on model
+    model_lower = model.lower()
+    if "gpt-4o" in model_lower:
+        return {
+            "model": "gpt-4o",
+            "input_rate": 0.0000025,  # $2.50 / M
+            "output_rate": 0.000010,  # $10.00 / M
+            "tpm_limit": 450000,
+            "rpm_limit": 3000
+        }
+    elif "gpt-4" in model_lower:
+        return {
+            "model": "gpt-4",
+            "input_rate": 0.000030,  # $30.00 / M
+            "output_rate": 0.000060,  # $60.00 / M
+            "tpm_limit": 150000,
+            "rpm_limit": 1000
+        }
+    elif "claude-3-5-sonnet" in model_lower or "claude" in model_lower:
+        return {
+            "model": "claude-3-5-sonnet",
+            "input_rate": 0.000003,  # $3.00 / M
+            "output_rate": 0.000015,  # $15.00 / M
+            "tpm_limit": 200000,
+            "rpm_limit": 1500
+        }
+    elif "snowflake" in model_lower:
+        return {
+            "model": "snowflake-cortex",
+            "input_rate": 0.0000007, # $0.70 / M
+            "output_rate": 0.0000028, # $2.80 / M
+            "tpm_limit": 300000,
+            "rpm_limit": 2000
+        }
+    elif "databricks" in model_lower:
+        return {
+            "model": "databricks-dbrx",
+            "input_rate": 0.0000015, # $1.50 / M
+            "output_rate": 0.0000045, # $4.50 / M
+            "tpm_limit": 250000,
+            "rpm_limit": 1800
+        }
+    else:
+        # Default fallback
+        return {
+            "model": model or "claude-3-5-sonnet",
+            "input_rate": 0.000003,
+            "output_rate": 0.000015,
+            "tpm_limit": 200000,
+            "rpm_limit": 1500
+        }
+
+# ── Task-type → Optimal Model Mapping ────────────────────────
+# Maps each task type to the CHEAPEST capable model that can handle it,
+# along with a human-readable rationale for the downgrade recommendation.
+
+TASK_MODEL_TIERS = {
+    # Simple retrieval / filtering — no reasoning required
+    "Log Parsing": {
+        "optimal_model": "snowflake-cortex",
+        "reason": "Structured log filtering requires only pattern matching. Snowflake Cortex handles this at 72% lower cost than GPT-4o and 95% lower than GPT-4.",
+        "complexity": "Low"
+    },
+    "Database Query": {
+        "optimal_model": "snowflake-cortex",
+        "reason": "SQL-level data retrieval has deterministic structure. Snowflake Cortex is purpose-built for this at minimal token cost.",
+        "complexity": "Low"
+    },
+    "Data Validation": {
+        "optimal_model": "snowflake-cortex",
+        "reason": "Schema validation and rule-based checks are lightweight. Snowflake Cortex or Databricks DBRX reduce cost by up to 90% vs GPT-4.",
+        "complexity": "Low"
+    },
+    # Medium complexity — structured output, API formats
+    "API Integration": {
+        "optimal_model": "databricks-dbrx",
+        "reason": "API request/response formatting is structured. Databricks DBRX handles JSON transformation at 40% lower cost than GPT-4o.",
+        "complexity": "Medium"
+    },
+    "Report Generation": {
+        "optimal_model": "claude-3-5-sonnet",
+        "reason": "Report synthesis benefits from Claude 3.5 Sonnet's strong writing capability at 40% of GPT-4 cost with comparable quality.",
+        "complexity": "Medium"
+    },
+    "Security Scan": {
+        "optimal_model": "gpt-4o",
+        "reason": "Security analysis requires broad threat intelligence. GPT-4o provides equivalent accuracy to GPT-4 at 92% lower cost.",
+        "complexity": "Medium"
+    },
+    # High complexity — deep reasoning, nuanced output
+    "Document Analysis": {
+        "optimal_model": "claude-3-5-sonnet",
+        "reason": "Document comprehension and clause extraction is a Claude 3.5 Sonnet strength, at 95% lower cost than GPT-4 with superior context handling.",
+        "complexity": "High"
+    },
+    "Risk Assessment": {
+        "optimal_model": "claude-3-5-sonnet",
+        "reason": "Risk factor analysis and scoring aligns well with Claude 3.5 Sonnet's structured reasoning at a fraction of GPT-4 cost.",
+        "complexity": "High"
+    },
+    "Code Analysis": {
+        "optimal_model": "gpt-4o",
+        "reason": "Static code analysis and diff review is well-handled by GPT-4o at 92% lower input token cost vs GPT-4.",
+        "complexity": "High"
+    },
+    "Unit Testing": {
+        "optimal_model": "gpt-4o",
+        "reason": "Test case generation benefits from GPT-4o's code reasoning at 92% lower cost than GPT-4 with near-identical output quality.",
+        "complexity": "High"
+    },
+    "LLM Reasoning": {
+        "optimal_model": "gpt-4o",
+        "reason": "General-purpose reasoning tasks are handled well by GPT-4o. Using GPT-4 for these tasks results in 10-12x higher costs without proportional quality gains.",
+        "complexity": "High"
+    },
+}
+
+# Model cost rates (must stay in sync with get_model_details)
+MODEL_RATES = {
+    "gpt-4o":            {"input_rate": 0.0000025,  "output_rate": 0.000010},
+    "gpt-4":             {"input_rate": 0.000030,   "output_rate": 0.000060},
+    "claude-3-5-sonnet": {"input_rate": 0.000003,   "output_rate": 0.000015},
+    "snowflake-cortex":  {"input_rate": 0.0000007,  "output_rate": 0.0000028},
+    "databricks-dbrx":   {"input_rate": 0.0000015,  "output_rate": 0.0000045},
+}
+
+def _compute_cost_recommendations():
+    """
+    Analyze executed tasks across all agents and compute model-specific
+    cost optimization recommendations with quantified savings estimates.
+    """
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        # Load all tasks with model + token breakdown
+        cursor.execute("""
+            SELECT t.*, a.name AS agent_name_full, a.platform AS agent_platform
+            FROM tasks t
+            LEFT JOIN agents a ON t.agent_id = a.id
+            ORDER BY t.agent_id, t.task_type
+        """)
+        tasks = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+    except Exception:
+        return {"error": "Could not load tasks", "recommendations": [], "summary": {}}
+
+    if not tasks:
+        return {"recommendations": [], "summary": {"total_current_cost": 0, "total_optimized_cost": 0, "total_savings": 0}}
+
+    # ── Aggregate by agent+task_type ──────────────────────────
+    from collections import defaultdict
+    agent_task_groups = defaultdict(lambda: defaultdict(list))
+    for t in tasks:
+        agent_task_groups[t["agent_id"]][t["task_type"] or "Unknown"].append(t)
+
+    recommendations = []
+    total_current  = 0.0
+    total_optimized = 0.0
+
+    # ── Per-agent analysis ────────────────────────────────────
+    for agent_id, task_types in agent_task_groups.items():
+        agent_current  = 0.0
+        agent_optimized = 0.0
+        agent_name = None
+        agent_model = None
+        task_recs = []
+
+        for task_type, task_list in task_types.items():
+            if not task_list:
+                continue
+
+            current_model  = task_list[0].get("model") or "claude-3-5-sonnet"
+            agent_name     = task_list[0].get("agent_name_full") or task_list[0].get("agent_name") or agent_id
+            agent_model    = current_model
+
+            # Current cost
+            current_cost = sum(t.get("cost", 0) or 0 for t in task_list)
+            total_tokens  = sum(t.get("tokens", 0) or 0 for t in task_list)
+            in_tokens     = sum(t.get("input_tokens") or int((t.get("tokens", 0) or 0) * 0.75) for t in task_list)
+            out_tokens    = sum(t.get("output_tokens") or int((t.get("tokens", 0) or 0) * 0.25) for t in task_list)
+
+            # Optimal model for this task type
+            tier = TASK_MODEL_TIERS.get(task_type, {})
+            optimal_model = tier.get("optimal_model", current_model)
+
+            # If current model IS already optimal or cheaper, skip
+            if optimal_model == current_model:
+                agent_current  += current_cost
+                agent_optimized += current_cost
+                continue
+
+            # Compute optimized cost
+            opt_rates = MODEL_RATES.get(optimal_model, MODEL_RATES["claude-3-5-sonnet"])
+            optimized_cost = (in_tokens * opt_rates["input_rate"]) + (out_tokens * opt_rates["output_rate"])
+
+            # Only recommend if there are genuine savings
+            savings = current_cost - optimized_cost
+            if savings <= 0:
+                agent_current  += current_cost
+                agent_optimized += current_cost
+                continue
+
+            savings_pct = (savings / current_cost * 100) if current_cost > 0 else 0
+
+            agent_current  += current_cost
+            agent_optimized += optimized_cost
+
+            task_recs.append({
+                "task_type":      task_type,
+                "task_count":     len(task_list),
+                "total_tokens":   total_tokens,
+                "current_model":  current_model,
+                "optimal_model":  optimal_model,
+                "current_cost":   round(current_cost, 5),
+                "optimized_cost": round(optimized_cost, 5),
+                "savings":        round(savings, 5),
+                "savings_pct":    round(savings_pct, 1),
+                "complexity":     tier.get("complexity", "Medium"),
+                "reason":         tier.get("reason", ""),
+            })
+
+        if not task_recs:
+            continue
+
+        total_current  += agent_current
+        total_optimized += agent_optimized
+        agent_savings    = agent_current - agent_optimized
+        agent_savings_pct = (agent_savings / agent_current * 100) if agent_current > 0 else 0
+
+        # Sort by savings descending
+        task_recs.sort(key=lambda x: x["savings"], reverse=True)
+
+        recommendations.append({
+            "agent_id":        agent_id,
+            "agent_name":      agent_name,
+            "agent_model":     agent_model,
+            "current_cost":    round(agent_current, 5),
+            "optimized_cost":  round(agent_optimized, 5),
+            "savings":         round(agent_savings, 5),
+            "savings_pct":     round(agent_savings_pct, 1),
+            "priority":        "High" if agent_savings_pct > 50 else ("Medium" if agent_savings_pct > 20 else "Low"),
+            "task_recommendations": task_recs,
+        })
+
+    # Sort by savings descending
+    recommendations.sort(key=lambda x: x["savings"], reverse=True)
+
+    total_savings = total_current - total_optimized
+
+    return {
+        "recommendations": recommendations,
+        "summary": {
+            "total_current_cost":   round(total_current, 5),
+            "total_optimized_cost": round(total_optimized, 5),
+            "total_savings":        round(total_savings, 5),
+            "total_savings_pct":    round((total_savings / total_current * 100) if total_current > 0 else 0, 1),
+            "agents_analyzed":      len(recommendations),
+            "agents_with_savings":  len([r for r in recommendations if r["savings"] > 0]),
+        }
+    }
+
 def _seed_historical_tasks():
     """Seed tasks table with realistic 30-day historical transaction logs for onboarded agents."""
     import random
@@ -194,7 +513,7 @@ def _seed_historical_tasks():
             conn.close()
             return
             
-        cursor.execute("SELECT id, name FROM agents")
+        cursor.execute("SELECT id, name, model, platform FROM agents")
         agents = cursor.fetchall()
         if not agents:
             print("[DB] No agents found in database to seed tasks for.")
@@ -217,7 +536,7 @@ def _seed_historical_tasks():
         
         # Generate 60 tasks spread across 30 days
         for i in range(60):
-            agent_id, agent_name = random.choice(agents)
+            agent_id, agent_name, agent_model, agent_platform = random.choice(agents)
             task_name, base_desc, min_dur, max_dur, min_tok, max_tok = random.choice(task_types)
             
             days_ago = random.uniform(0.1, 30.0)
@@ -227,7 +546,12 @@ def _seed_historical_tasks():
             status = "Success" if random.random() < 0.98 else "Failed"
             duration = random.randint(min_dur, max_dur)
             tokens = random.randint(min_tok, max_tok)
-            cost = round((tokens * 0.000008) + (duration / 10000.0), 5)
+            
+            # Calculate cost based on the specific LLM input/output tokens
+            details = get_model_details(agent_model, agent_platform)
+            in_tok = int(tokens * 0.75)
+            out_tok = int(tokens * 0.25)
+            cost = round((in_tok * details["input_rate"]) + (out_tok * details["output_rate"]), 5)
             
             if status == "Failed":
                 desc = f"Failed during execution: {base_desc}"
@@ -238,9 +562,11 @@ def _seed_historical_tasks():
             
             cursor.execute('''
                 INSERT INTO tasks (
-                    id, agent_id, agent_name, timestamp, status, duration_ms, cost, tokens, task_type, description
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (task_id, agent_id, agent_name, timestamp_str, status, duration, cost, tokens, task_name, desc))
+                    id, agent_id, agent_name, timestamp, status, duration_ms, cost, tokens, task_type, description,
+                    model, input_tokens, output_tokens
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (task_id, agent_id, agent_name, timestamp_str, status, duration, cost, tokens, task_name, desc,
+                  details["model"], in_tok, out_tok))
             
         conn.commit()
         conn.close()
@@ -249,7 +575,10 @@ def _seed_historical_tasks():
         print("[DB] Error seeding tasks:", e)
 
 def log_new_tasks_for_run_all(agents_list):
-    """Log a few new task executions when a supervisory run-all occurs."""
+    """Log a few new task executions when a supervisory run-all occurs (DEMO_MODE only)."""
+    if not _demo_mode():
+        print('[DB] DEMO_MODE off — skipping simulated run-all task logging.')
+        return
     import random
     import uuid
     from datetime import datetime, timezone
@@ -274,16 +603,23 @@ def log_new_tasks_for_run_all(agents_list):
                 status = "Success" if random.random() < 0.95 else "Failed"
                 duration = random.randint(min_dur, max_dur)
                 tokens = random.randint(min_tok, max_tok)
-                cost = round((tokens * 0.000008) + (duration / 10000.0), 5)
+                
+                details = get_model_details(agent.get('model'), agent.get('platform'))
+                in_tok = int(tokens * 0.75)
+                out_tok = int(tokens * 0.25)
+                cost = round((in_tok * details["input_rate"]) + (out_tok * details["output_rate"]), 5)
+                
                 desc = f"Completed during run-all cycle: {base_desc}" if status == "Success" else f"Failed during run-all cycle: {base_desc}"
                 task_id = f"TSK-{uuid.uuid4().hex[:8].upper()}"
                 
                 # Insert task log
                 cursor.execute('''
                     INSERT INTO tasks (
-                        id, agent_id, agent_name, timestamp, status, duration_ms, cost, tokens, task_type, description
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (task_id, agent.get('id'), agent.get('name'), now.isoformat(), status, duration, cost, tokens, task_name, desc))
+                        id, agent_id, agent_name, timestamp, status, duration_ms, cost, tokens, task_type, description,
+                        model, input_tokens, output_tokens
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (task_id, agent.get('id'), agent.get('name'), now.isoformat(), status, duration, cost, tokens, task_name, desc,
+                      details["model"], in_tok, out_tok))
                 
                 # Update agent execution metrics
                 cursor.execute('''
@@ -345,7 +681,10 @@ EVENTS_FILE = os.path.join(PROJECT_ROOT, 'events.json')
 # Initialize SQLite database and sync
 _init_db()
 _sync_json_to_sqlite()
-_seed_historical_tasks()
+if _demo_mode():
+    _seed_historical_tasks()
+else:
+    print('[DB] DEMO_MODE off — skipping simulated task seeding.')
 
 # In-memory event log (also persisted to events.json)
 _event_log = []  # list of {id, timestamp, type, source, description, severity}
@@ -631,7 +970,11 @@ AGENT_MODULES = {
 }
 
 def _increment_agent_metrics():
-    """Simulate task execution, token usage, and cost increases for all active agents."""
+    """Simulate task execution, token usage, and cost increases for all active agents.
+
+    DEMO_MODE only — in real mode metrics change solely through recorded activity."""
+    if not _demo_mode():
+        return
     import random
     agents = _load_agents()
     modified = False
@@ -833,6 +1176,12 @@ class AETHERHandler(http.server.SimpleHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
         
+        # Trust layer routes (identity / delegation / reputation / recourse)
+        if path.startswith('/api/trust/') or path.startswith('/.well-known/agent-card/'):
+            payload, status = trust_api.handle('GET', path, urllib.parse.parse_qs(parsed.query), {})
+            self._json_response(payload, status)
+            return
+        
         # API routes
         if path == '/api/health':
             self._json_response({'status': 'ok', 'server': 'AETHER Backend', 'timestamp': datetime.now(timezone.utc).isoformat(), 'llm_providers': llm_gateway._get_provider_order()})
@@ -924,6 +1273,13 @@ class AETHERHandler(http.server.SimpleHTTPRequestHandler):
                 self._json_response({'error': str(e)}, 500)
             return
 
+        if path == '/api/cost-recommendations':
+            try:
+                self._json_response(_compute_cost_recommendations())
+            except Exception as e:
+                self._json_response({'error': str(e)}, 500)
+            return
+
         if path == '/api/agents':
             agents = _load_agents()
             self._json_response({'agents': agents, 'count': len(agents)})
@@ -960,6 +1316,31 @@ class AETHERHandler(http.server.SimpleHTTPRequestHandler):
             else:
                 self._json_response({'error': 'No results for ' + agent_type, 'available': list(results.keys())}, 404)
             return
+            
+        if path == '/api/a2a-transactions':
+            try:
+                conn = sqlite3.connect(DB_FILE)
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM a2a_transactions ORDER BY timestamp DESC LIMIT 100")
+                txs = []
+                for r in cursor.fetchall():
+                    txs.append({
+                        'id': r['id'],
+                        'timestamp': r['timestamp'],
+                        'sender_id': r['sender_id'],
+                        'receiver_id': r['receiver_id'],
+                        'tokens_requested': r['tokens_requested'],
+                        'cost': r['cost'],
+                        'status': r['status'],
+                        'decline_reason': r['decline_reason'],
+                        'compliance_check': r['compliance_check']
+                    })
+                conn.close()
+                self._json_response({'transactions': txs, 'count': len(txs)})
+            except Exception as e:
+                self._json_response({'error': str(e)}, 500)
+            return
         
         # Static files
         super().do_GET()
@@ -979,6 +1360,11 @@ class AETHERHandler(http.server.SimpleHTTPRequestHandler):
             except:
                 body = {}
         
+        if path.startswith('/api/trust/'):
+            payload, status = trust_api.handle('POST', path, urllib.parse.parse_qs(parsed.query), body)
+            self._json_response(payload, status)
+            return
+        
         if path == '/api/agents':
             return self._handle_onboard_agent(body)
         
@@ -988,6 +1374,12 @@ class AETHERHandler(http.server.SimpleHTTPRequestHandler):
         
         if path == '/api/run-all':
             return self._handle_run_all()
+            
+        if path == '/api/a2a-transactions/authorize':
+            return self._handle_a2a_authorize(body)
+            
+        if path == '/api/a2a-transactions/dispute':
+            return self._handle_a2a_dispute(body)
         
         self._json_response({'error': 'Unknown endpoint: ' + path}, 404)
     
@@ -1122,6 +1514,132 @@ class AETHERHandler(http.server.SimpleHTTPRequestHandler):
         
         print('[Server] Agent onboarded: ' + agent['name'] + ' (' + agent['id'] + ')')
         self._json_response({'message': 'Agent onboarded', 'agent': agent, 'total': len(agents)}, 201)
+        
+    def _handle_a2a_authorize(self, body):
+        """Authorize an agent-to-agent transaction."""
+        sender_id = body.get('sender_id')
+        receiver_id = body.get('receiver_id')
+        tokens_requested = int(body.get('tokens_requested', 1000))
+        tx_id = "TX-" + str(int(time.time() * 1000))[-8:]
+        timestamp = datetime.now(timezone.utc).isoformat()
+        
+        status = 'Approved'
+        decline_reason = ''
+        compliance_check = 'Passed'
+        
+        conn = sqlite3.connect(DB_FILE)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Load sender and receiver
+        cursor.execute("SELECT * FROM agents WHERE id=?", (sender_id,))
+        sender = cursor.fetchone()
+        cursor.execute("SELECT * FROM agents WHERE id=?", (receiver_id,))
+        receiver = cursor.fetchone()
+        
+        if not sender:
+            status = 'Declined'
+            decline_reason = 'Sender agent not found in AETHER registry'
+            compliance_check = 'Failed'
+        elif not receiver:
+            status = 'Declined'
+            decline_reason = 'Receiver agent not found in AETHER registry'
+            compliance_check = 'Failed'
+        else:
+            # Policy Checks
+            # Rule 1: Approved Model check on receiver
+            receiver_model = (receiver['model'] or "").lower()
+            if 'gpt-3.5' in receiver_model or 'davinci' in receiver_model or 'llama2' in receiver_model:
+                status = 'Declined'
+                decline_reason = 'GOV-MODEL-001 Violation: Receiver uses unapproved model version (' + receiver['model'] + ')'
+                compliance_check = 'Failed'
+            # Rule 2: Token Limit check
+            elif tokens_requested > 500000:
+                status = 'Declined'
+                decline_reason = 'GOV-COST-001 Violation: Requested tokens (' + str(tokens_requested) + ') exceed transaction threshold (500k)'
+                compliance_check = 'Failed'
+            # Rule 3: High risk rating
+            elif receiver['riskScore'] > 80:
+                status = 'Declined'
+                decline_reason = 'GOV-RISK-001 Violation: Target agent risk rating (' + str(receiver['riskScore']) + ') is Critical'
+                compliance_check = 'Failed'
+                
+        cost = round((tokens_requested * 0.00002), 4) # $0.02 per 1k tokens
+        
+        # Insert transaction
+        cursor.execute('''
+            INSERT INTO a2a_transactions (id, timestamp, sender_id, receiver_id, tokens_requested, cost, status, decline_reason, compliance_check)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (tx_id, timestamp, sender_id, receiver_id, tokens_requested, cost, status, decline_reason, compliance_check))
+        
+        if status == 'Approved' and sender and receiver:
+            # Update agents tasks and token counters
+            cursor.execute("UPDATE agents SET tasksExecuted = tasksExecuted + 1, tokenUsage = tokenUsage + ? WHERE id=?", (tokens_requested, sender_id))
+            cursor.execute("UPDATE agents SET tasksExecuted = tasksExecuted + 1, tokenUsage = tokenUsage + ? WHERE id=?", (tokens_requested, receiver_id))
+            
+            # Log event
+            _log_event('A2ATransaction', 'AETHER Visa Clearing',
+                       f"Authorized: {sender['name']} -> {receiver['name']} | {tokens_requested} tokens (${cost})",
+                       'info')
+        else:
+            # Log failure event
+            _log_event('PolicyViolation', 'AETHER Visa Clearing',
+                       f"DECLINED: A2A transaction {sender_id} -> {receiver_id} blocked. Reason: {decline_reason}",
+                       'high')
+                       
+        conn.commit()
+        conn.close()
+        
+        self._json_response({
+            'transaction_id': tx_id,
+            'status': status,
+            'decline_reason': decline_reason,
+            'cost': cost,
+            'timestamp': timestamp,
+            'compliance_check': compliance_check
+        })
+
+    def _handle_a2a_dispute(self, body):
+        """Dispute and refund an agent-to-agent transaction."""
+        tx_id = body.get('transaction_id')
+        
+        conn = sqlite3.connect(DB_FILE)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT * FROM a2a_transactions WHERE id=?", (tx_id,))
+        tx = cursor.fetchone()
+        
+        if not tx:
+            conn.close()
+            self._json_response({'error': 'Transaction not found'}, 404)
+            return
+            
+        if tx['status'] != 'Approved':
+            conn.close()
+            self._json_response({'error': 'Only Approved transactions can be disputed'}, 400)
+            return
+            
+        # Update transaction status to Refunded/Disputed
+        cursor.execute("UPDATE a2a_transactions SET status='Refunded' WHERE id=?", (tx_id,))
+        
+        # Deduct tasks and tokenUsage
+        tokens = tx['tokens_requested']
+        cursor.execute("UPDATE agents SET tasksExecuted = MAX(0, tasksExecuted - 1), tokenUsage = MAX(0, tokenUsage - ?) WHERE id=?", (tokens, tx['sender_id']))
+        cursor.execute("UPDATE agents SET tasksExecuted = MAX(0, tasksExecuted - 1), tokenUsage = MAX(0, tokenUsage - ?) WHERE id=?", (tokens, tx['receiver_id']))
+        
+        _log_event('A2ATransactionRefund', 'AETHER Visa Clearing',
+                   f"REFUNDED: Transaction {tx_id} disputed. Reverted {tokens} tokens.",
+                   'warning')
+                   
+        conn.commit()
+        conn.close()
+        
+        self._json_response({
+            'message': 'Transaction refunded successfully',
+            'transaction_id': tx_id,
+            'status': 'Refunded'
+        })
     
     def _handle_run_agent(self, agent_type):
         """Run a specific AI agent."""
@@ -1195,6 +1713,10 @@ if __name__ == '__main__':
     print('    GET    /api/results/<type>   — Results by type')
     print()
     print('  Agent types: compliance, risk, governance, audit, cost, health')
+    print()
+    print('  Trust Layer:  /api/trust/*  (identity, delegation, reputation, recourse)')
+    print('  Agent cards:  /.well-known/agent-card/<did>')
+    print('  DEMO_MODE:    ' + ('ON — simulated metrics active' if _demo_mode() else 'OFF — real data only'))
     print('=' * 60)
     print('  AETHER MCP Server:')
     print('    Command to run: py mcp_server.py')
@@ -1214,7 +1736,7 @@ if __name__ == '__main__':
         _event_counter = 0
         _save_events()
     
-    server = http.server.HTTPServer(('0.0.0.0', port), AETHERHandler)
+    server = http.server.ThreadingHTTPServer(('0.0.0.0', port), AETHERHandler)
     print('[Server] Listening on http://localhost:' + str(port))
     print('[Server] Press Ctrl+C to stop')
     print()

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AETHER Trust Console</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b27; --border: #2a3245; --text: #e6e9f0;
+    --muted: #8b93a7; --accent: #e94560; --good: #3fb96a; --warn: #e0a63a; --link: #58a6ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 14px/1.5 'Segoe UI', system-ui, sans-serif; padding: 24px; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  h1 span { color: var(--accent); }
+  .sub { color: var(--muted); margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .card h2 { font-size: 15px; margin-bottom: 10px; color: var(--accent); }
+  label { display: block; color: var(--muted); font-size: 12px; margin: 8px 0 2px; }
+  input, select { width: 100%; background: #0d1420; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px; font-size: 13px; }
+  button { margin-top: 10px; background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
+  button:hover { opacity: .88; }
+  button.secondary { background: #26304a; }
+  pre { background: #0a0f18; border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin-top: 10px; font-size: 12px; overflow-x: auto; max-height: 260px; color: #9fe8b8; white-space: pre-wrap; word-break: break-all; }
+  .wide { grid-column: 1 / -1; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: #26304a; margin-left: 6px; }
+  .ok { color: var(--good); } .bad { color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>AETHER <span>Trust Console</span></h1>
+<div class="sub">Identity &middot; Delegation &middot; Reputation &middot; Recourse — the trust layer for agent-to-agent commerce <span class="pill" id="mode-pill">checking…</span></div>
+
+<div class="grid">
+  <div class="card">
+    <h2>1 &middot; Register identity</h2>
+    <label>Kind</label>
+    <select id="reg-kind"><option value="principal">principal (human/org)</option><option value="agent">agent</option></select>
+    <label>Name</label><input id="reg-name" placeholder="e.g. Manish / Booking Agent">
+    <label>Registry agent id (optional, agents only)</label><input id="reg-agentid" placeholder="AGT-0001">
+    <button onclick="registerIdentity()">Register</button>
+    <button class="secondary" onclick="listIdentities()">List identities</button>
+    <pre id="out-identity">—</pre>
+  </div>
+
+  <div class="card">
+    <h2>2 &middot; Issue mandate (delegation)</h2>
+    <label>Principal DID</label><input id="m-principal" placeholder="did:aether:…">
+    <label>Agent DID</label><input id="m-agent" placeholder="did:aether:…">
+    <label>Scope (comma separated, * for all)</label><input id="m-scope" value="booking,research">
+    <label>Spend cap (USD)</label><input id="m-cap" value="10">
+    <label>Max tokens per transaction</label><input id="m-tokens" value="100000">
+    <label>Expires (ISO)</label><input id="m-expiry" value="">
+    <label>Parent mandate id (optional — sub-delegation)</label><input id="m-parent" placeholder="MND-…">
+    <button onclick="issueMandate()">Issue (auto-sign)</button>
+    <button class="secondary" onclick="listMandates()">List mandates</button>
+    <pre id="out-mandate">—</pre>
+  </div>
+
+  <div class="card">
+    <h2>3 &middot; Fund account (demo)</h2>
+    <label>DID</label><input id="f-did" placeholder="did:aether:…">
+    <label>Amount (USD)</label><input id="f-amount" value="25">
+    <button onclick="fund()">Fund</button>
+    <button class="secondary" onclick="checkAccount()">Check balance</button>
+    <pre id="out-fund">—</pre>
+  </div>
+
+  <div class="card">
+    <h2>4 &middot; Authorize transaction (escrow)</h2>
+    <label>Mandate id</label><input id="t-mandate" placeholder="MND-…">
+    <label>Sender DID</label><input id="t-sender" placeholder="did:aether:…">
+    <label>Receiver DID</label><input id="t-receiver" placeholder="did:aether:…">
+    <label>Tokens</label><input id="t-tokens" value="50000">
+    <label>Purpose</label><input id="t-purpose" value="booking">
+    <button onclick="authorize()">Authorize</button>
+    <button class="secondary" onclick="completeTx()">Complete last tx</button>
+    <pre id="out-tx">—</pre>
+  </div>
+
+  <div class="card">
+    <h2>5 &middot; Recourse (disputes)</h2>
+    <label>Transaction id</label><input id="d-tx" placeholder="TX-…">
+    <label>Complainant DID</label><input id="d-who" placeholder="did:aether:…">
+    <label>Reason</label><input id="d-reason" value="Service not delivered">
+    <button onclick="openDispute()">Open dispute</button>
+    <button class="secondary" onclick="resolveDispute()">Resolve last dispute (auto-arbitrate)</button>
+    <pre id="out-dispute">—</pre>
+  </div>
+
+  <div class="card">
+    <h2>6 &middot; Reputation &amp; ledger</h2>
+    <label>DID</label><input id="r-did" placeholder="did:aether:…">
+    <button onclick="getReputation()">Get reputation</button>
+    <button class="secondary" onclick="verifyLedger()">Verify ledger integrity</button>
+    <button class="secondary" onclick="getCard()">Get signed agent card</button>
+    <pre id="out-rep">—</pre>
+  </div>
+
+  <div class="card wide">
+    <h2>Recent trust transactions</h2>
+    <button class="secondary" onclick="loadTxs()">Refresh</button>
+    <table id="tx-table"><thead><tr>
+      <th>ID</th><th>Sender</th><th>Receiver</th><th>Tokens</th><th>USD</th><th>Status</th><th>Reason</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+</div>
+
+<script>
+const API = '';
+let lastTx = null, lastDispute = null;
+document.getElementById('m-expiry').value = new Date(Date.now() + 30*864e5).toISOString();
+
+async function call(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  return r.json();
+}
+function show(id, data) { document.getElementById(id).textContent = JSON.stringify(data, null, 2); }
+function esc(s){const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
+function short(s){ s = s==null?'':String(s); return s.length > 26 ? s.slice(0, 23) + '…' : s; }
+
+async function registerIdentity() {
+  const data = await call('POST', '/api/trust/identity/register', {
+    kind: document.getElementById('reg-kind').value,
+    name: document.getElementById('reg-name').value,
+    agent_id: document.getElementById('reg-agentid').value || undefined });
+  show('out-identity', data);
+}
+async function listIdentities() { show('out-identity', await call('GET', '/api/trust/identity')); }
+async function issueMandate() {
+  const data = await call('POST', '/api/trust/mandate/issue', {
+    principal_did: document.getElementById('m-principal').value,
+    agent_did: document.getElementById('m-agent').value,
+    scope: document.getElementById('m-scope').value.split(',').map(s => s.trim()).filter(Boolean),
+    spend_cap_usd: parseFloat(document.getElementById('m-cap').value),
+    max_tokens_per_tx: parseInt(document.getElementById('m-tokens').value),
+    expires_at: document.getElementById('m-expiry').value,
+    parent_id: document.getElementById('m-parent').value || undefined,
+    auto_sign: true });
+  if (data.id) document.getElementById('t-mandate').value = data.id;
+  show('out-mandate', data);
+}
+async function listMandates() { show('out-mandate', await call('GET', '/api/trust/mandates')); }
+async function fund() {
+  show('out-fund', await call('POST', '/api/trust/account/fund', {
+    did: document.getElementById('f-did').value,
+    amount: parseFloat(document.getElementById('f-amount').value) }));
+}
+async function checkAccount() {
+  show('out-fund', await call('GET', '/api/trust/account/' + document.getElementById('f-did').value));
+}
+async function authorize() {
+  const data = await call('POST', '/api/trust/a2a/authorize', {
+    mandate_id: document.getElementById('t-mandate').value,
+    sender_did: document.getElementById('t-sender').value,
+    receiver_did: document.getElementById('t-receiver').value,
+    tokens: parseInt(document.getElementById('t-tokens').value),
+    purpose: document.getElementById('t-purpose').value,
+    auto_sign: true });
+  if (data.transaction_id) { lastTx = data.transaction_id; document.getElementById('d-tx').value = data.transaction_id; }
+  show('out-tx', data); loadTxs();
+}
+async function completeTx() {
+  if (!lastTx) return show('out-tx', { error: 'Authorize a transaction first' });
+  show('out-tx', await call('POST', '/api/trust/a2a/complete', { transaction_id: lastTx, auto_sign: true }));
+  loadTxs();
+}
+async function openDispute() {
+  const data = await call('POST', '/api/trust/dispute/open', {
+    transaction_id: document.getElementById('d-tx').value,
+    complainant_did: document.getElementById('d-who').value,
+    reason: document.getElementById('d-reason').value,
+    auto_sign: true });
+  if (data.dispute_id) lastDispute = data.dispute_id;
+  show('out-dispute', data);
+}
+async function resolveDispute() {
+  if (!lastDispute) return show('out-dispute', { error: 'Open a dispute first' });
+  show('out-dispute', await call('POST', '/api/trust/dispute/resolve', { dispute_id: lastDispute }));
+  loadTxs();
+}
+async function getReputation() {
+  show('out-rep', await call('GET', '/api/trust/reputation/' + document.getElementById('r-did').value));
+}
+async function verifyLedger() { show('out-rep', await call('GET', '/api/trust/ledger/verify')); }
+async function getCard() {
+  show('out-rep', await call('GET', '/.well-known/agent-card/' + document.getElementById('r-did').value));
+}
+async function loadTxs() {
+  const data = await call('GET', '/api/trust/a2a/transactions');
+  const tbody = document.querySelector('#tx-table tbody');
+  tbody.innerHTML = (data.transactions || []).slice(0, 20).map(t =>
+    '<tr><td>' + esc(t.id) + '</td><td>' + esc(short(t.sender_did)) + '</td><td>' + esc(short(t.receiver_did)) +
+    '</td><td>' + esc(t.tokens) + '</td><td>$' + esc((t.amount_usd || 0).toFixed(4)) +
+    '</td><td class="' + (t.status === 'Declined' || t.status === 'Refunded' ? 'bad' : 'ok') + '">' + esc(t.status) +
+    '</td><td>' + esc(short(t.decline_reason || '')) + '</td></tr>').join('');
+}
+(async () => {
+  try {
+    const h = await call('GET', '/api/health');
+    document.getElementById('mode-pill').textContent = h.status === 'ok' ? 'backend connected' : 'backend?';
+  } catch { document.getElementById('mode-pill').textContent = 'backend offline — start server.py'; }
+  loadTxs();
+})();
+</script>
+</body>
+</html>

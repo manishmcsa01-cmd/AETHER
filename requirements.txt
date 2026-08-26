@@ -1,0 +1,8 @@
+# AETHER — Python dependencies
+# The core platform (server.py, agents/) remains stdlib-only.
+# The trust layer requires:
+cryptography>=42.0        # Ed25519 identity, signatures (trust/)
+# The MCP server (mcp_server.py) additionally requires:
+mcp>=1.0                  # FastMCP stdio server
+# Development / testing (optional — tests also run with stdlib unittest):
+# pytest>=8.0

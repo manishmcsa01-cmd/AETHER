@@ -7,13 +7,15 @@ from mcp.server.fastmcp import FastMCP
 # Initialize FastMCP Server
 mcp = FastMCP("AETHER Database")
 
-DB_PATH = r"c:\AETHER\prototype\aether.db"
+# Resolve the database next to this file so the server works from any checkout location.
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "aether.db")
 
 def get_db_connection():
     """Returns a connection to the SQLite database, using read-only mode if supported."""
     try:
         # Enforce read-only at the SQLite engine level using URI connection
-        db_uri = f"file:{DB_PATH.replace('\\', '/')}?mode=ro"
+        normalized = DB_PATH.replace("\\", "/")
+        db_uri = "file:" + normalized + "?mode=ro"
         conn = sqlite3.connect(db_uri, uri=True)
         conn.row_factory = sqlite3.Row
         return conn

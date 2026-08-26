@@ -37,11 +37,16 @@ def _load_env(env_path=None):
 
 _load_env()
 
-# ── SSL Context (permissive for corporate proxies) ────────────
+# ── SSL Context ───────────────────────────────────────────────
+# TLS certificate verification is ON by default. Only if a corporate proxy
+# forces it, set AETHER_INSECURE_SSL=1 in .env to disable verification
+# (never do this in production).
 
 _ssl_ctx = ssl.create_default_context()
-_ssl_ctx.check_hostname = False
-_ssl_ctx.verify_mode = ssl.CERT_NONE
+if os.environ.get('AETHER_INSECURE_SSL', '').strip().lower() in ('1', 'true', 'yes'):
+    print('[LLM Gateway] WARNING: TLS certificate verification DISABLED via AETHER_INSECURE_SSL')
+    _ssl_ctx.check_hostname = False
+    _ssl_ctx.verify_mode = ssl.CERT_NONE
 
 # ── Provider Configurations ───────────────────────────────────
 
