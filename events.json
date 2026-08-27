@@ -1,805 +1,805 @@
 {
   "events": [
     {
-      "id": "EVT-02491",
-      "timestamp": "2026-08-27T12:35:50.296519+00:00",
+      "id": "EVT-02701",
+      "timestamp": "2026-08-27T14:25:11.123023+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "Compliance Monitor Agent \u2014 Agent handles financial data. Enhanced monitoring required.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02702",
+      "timestamp": "2026-08-27T14:25:11.135411+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "Data Warehouse Analyst Agent \u2014 Agent handles financial data. Enhanced monitoring required.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02703",
+      "timestamp": "2026-08-27T14:25:11.145495+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "Data Warehouse Analyst Agent \u2014 Model 'snowflake-cortex' is not on the approved list.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02704",
+      "timestamp": "2026-08-27T14:25:11.155026+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "MLOps Pipeline Agent \u2014 Model 'databricks-dbrx' is not on the approved list.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02705",
+      "timestamp": "2026-08-27T14:25:11.165021+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "Finance Reporting Agent \u2014 Agent handles financial data. Enhanced monitoring required.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02706",
+      "timestamp": "2026-08-27T14:25:22.402148+00:00",
+      "type": "AgentRunStarted",
+      "source": "Cost Agent",
+      "description": "Cost agent analyzed 8 agents in 0.0s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-02707",
+      "timestamp": "2026-08-27T14:25:22.412144+00:00",
       "type": "CostAnalyzed",
       "source": "Cost Agent",
-      "description": "Total monthly spend: $29.96, 0 anomalies found",
+      "description": "Total monthly spend: $31.99, 0 anomalies found",
       "severity": "info"
     },
     {
-      "id": "EVT-02492",
-      "timestamp": "2026-08-27T12:35:54.057676+00:00",
+      "id": "EVT-02708",
+      "timestamp": "2026-08-27T14:25:39.052192+00:00",
       "type": "AgentRunStarted",
       "source": "Health Agent",
-      "description": "Health agent analyzed 8 agents in 3.69s",
+      "description": "Health agent analyzed 8 agents in 5.25s",
       "severity": "info"
     },
     {
-      "id": "EVT-02493",
-      "timestamp": "2026-08-27T12:35:54.068188+00:00",
+      "id": "EVT-02709",
+      "timestamp": "2026-08-27T14:25:39.057774+00:00",
       "type": "HealthCheckPassed",
       "source": "Health Agent",
-      "description": "Procurement Intelligence Agent \u2014 healthy (601ms)",
+      "description": "Procurement Intelligence Agent \u2014 healthy (868ms)",
       "severity": "info"
     },
     {
-      "id": "EVT-02494",
-      "timestamp": "2026-08-27T12:35:54.078239+00:00",
+      "id": "EVT-02710",
+      "timestamp": "2026-08-27T14:25:39.063198+00:00",
       "type": "HealthCheckPassed",
       "source": "Health Agent",
-      "description": "Compliance Monitor Agent \u2014 healthy (477ms)",
+      "description": "Compliance Monitor Agent \u2014 healthy (593ms)",
       "severity": "info"
     },
     {
-      "id": "EVT-02495",
-      "timestamp": "2026-08-27T12:35:54.086848+00:00",
+      "id": "EVT-02711",
+      "timestamp": "2026-08-27T14:25:39.068551+00:00",
       "type": "HealthCheckPassed",
       "source": "Health Agent",
-      "description": "Customer Insights Agent \u2014 healthy (177ms)",
+      "description": "Customer Insights Agent \u2014 healthy (408ms)",
       "severity": "info"
     },
     {
-      "id": "EVT-02496",
-      "timestamp": "2026-08-27T12:35:54.096106+00:00",
+      "id": "EVT-02712",
+      "timestamp": "2026-08-27T14:25:39.074175+00:00",
       "type": "HealthCheckFailed",
       "source": "Health Agent",
       "description": "Data Warehouse Analyst Agent \u2014 Degraded: Endpoint unreachable",
       "severity": "warning"
     },
     {
-      "id": "EVT-02497",
-      "timestamp": "2026-08-27T12:35:54.104712+00:00",
+      "id": "EVT-02713",
+      "timestamp": "2026-08-27T14:25:39.079400+00:00",
       "type": "HealthCheckPassed",
       "source": "Health Agent",
-      "description": "MLOps Pipeline Agent \u2014 healthy (1318ms)",
+      "description": "MLOps Pipeline Agent \u2014 healthy (1738ms)",
       "severity": "info"
     },
     {
-      "id": "EVT-02498",
-      "timestamp": "2026-08-27T12:35:54.113585+00:00",
+      "id": "EVT-02714",
+      "timestamp": "2026-08-27T14:25:39.087364+00:00",
       "type": "HealthCheckPassed",
       "source": "Health Agent",
-      "description": "Security Threat Analyst Agent \u2014 healthy (406ms)",
+      "description": "Security Threat Analyst Agent \u2014 healthy (714ms)",
       "severity": "info"
     },
     {
-      "id": "EVT-02499",
-      "timestamp": "2026-08-27T12:35:54.122433+00:00",
+      "id": "EVT-02715",
+      "timestamp": "2026-08-27T14:25:39.096894+00:00",
       "type": "HealthCheckPassed",
       "source": "Health Agent",
-      "description": "HR Policy Assistant Agent \u2014 healthy (153ms)",
+      "description": "HR Policy Assistant Agent \u2014 healthy (305ms)",
       "severity": "info"
     },
     {
-      "id": "EVT-02500",
-      "timestamp": "2026-08-27T12:35:54.131564+00:00",
+      "id": "EVT-02716",
+      "timestamp": "2026-08-27T14:25:39.106989+00:00",
       "type": "HealthCheckPassed",
       "source": "Health Agent",
-      "description": "Finance Reporting Agent \u2014 healthy (443ms)",
+      "description": "Finance Reporting Agent \u2014 healthy (482ms)",
       "severity": "info"
     },
     {
-      "id": "EVT-02501",
-      "timestamp": "2026-08-27T12:35:54.192350+00:00",
+      "id": "EVT-02717",
+      "timestamp": "2026-08-27T14:25:50.267778+00:00",
       "type": "AgentRunStarted",
       "source": "Audit Agent",
       "description": "Audit agent analyzed 8 agents in 0.0s",
       "severity": "info"
     },
     {
-      "id": "EVT-02502",
-      "timestamp": "2026-08-27T12:35:54.197570+00:00",
+      "id": "EVT-02718",
+      "timestamp": "2026-08-27T14:25:50.273003+00:00",
       "type": "AuditCompleted",
       "source": "Audit Agent",
-      "description": "Audit completed \u2014 13 open findings, 1 critical",
+      "description": "Audit completed \u2014 55 open findings, 1 critical",
       "severity": "high"
     },
     {
-      "id": "EVT-02503",
-      "timestamp": "2026-08-27T12:45:49.587491+00:00",
+      "id": "EVT-02719",
+      "timestamp": "2026-08-27T14:28:01.014037+00:00",
       "type": "AgentRunStarted",
       "source": "Compliance Agent",
       "description": "Compliance agent analyzed 8 agents in 0.0s",
       "severity": "info"
     },
     {
-      "id": "EVT-02504",
-      "timestamp": "2026-08-27T12:45:49.596227+00:00",
+      "id": "EVT-02720",
+      "timestamp": "2026-08-27T14:28:01.023786+00:00",
       "type": "ComplianceViolation",
       "source": "Compliance Agent",
       "description": "Procurement Intelligence Agent \u2014 Error: LLM returned unsuccessful response",
       "severity": "warning"
     },
     {
-      "id": "EVT-02505",
-      "timestamp": "2026-08-27T12:45:49.604478+00:00",
+      "id": "EVT-02721",
+      "timestamp": "2026-08-27T14:28:01.033872+00:00",
       "type": "ComplianceViolation",
       "source": "Compliance Agent",
       "description": "Procurement Intelligence Agent \u2014 Error: LLM returned unsuccessful response",
       "severity": "warning"
     },
     {
-      "id": "EVT-02506",
-      "timestamp": "2026-08-27T12:45:49.613412+00:00",
+      "id": "EVT-02722",
+      "timestamp": "2026-08-27T14:28:01.043996+00:00",
       "type": "ComplianceViolation",
       "source": "Compliance Agent",
       "description": "Procurement Intelligence Agent \u2014 Error: LLM returned unsuccessful response",
       "severity": "warning"
     },
     {
-      "id": "EVT-02507",
-      "timestamp": "2026-08-27T12:45:49.622008+00:00",
+      "id": "EVT-02723",
+      "timestamp": "2026-08-27T14:28:01.053028+00:00",
       "type": "ComplianceViolation",
       "source": "Compliance Agent",
       "description": "Procurement Intelligence Agent \u2014 Error: LLM returned unsuccessful response",
       "severity": "warning"
     },
     {
-      "id": "EVT-02508",
-      "timestamp": "2026-08-27T12:45:49.630660+00:00",
+      "id": "EVT-02724",
+      "timestamp": "2026-08-27T14:28:01.063758+00:00",
       "type": "ComplianceViolation",
       "source": "Compliance Agent",
       "description": "Procurement Intelligence Agent \u2014 Error: LLM returned unsuccessful response",
       "severity": "warning"
     },
     {
-      "id": "EVT-02509",
-      "timestamp": "2026-08-27T12:45:49.639670+00:00",
+      "id": "EVT-02725",
+      "timestamp": "2026-08-27T14:28:01.073226+00:00",
       "type": "ComplianceViolation",
       "source": "Compliance Agent",
       "description": "Compliance Monitor Agent \u2014 Error: LLM returned unsuccessful response",
       "severity": "warning"
     },
     {
-      "id": "EVT-02510",
-      "timestamp": "2026-08-27T12:45:49.649113+00:00",
+      "id": "EVT-02726",
+      "timestamp": "2026-08-27T14:28:01.082474+00:00",
       "type": "ComplianceViolation",
       "source": "Compliance Agent",
       "description": "Compliance Monitor Agent \u2014 Error: LLM returned unsuccessful response",
       "severity": "warning"
     },
     {
-      "id": "EVT-02511",
-      "timestamp": "2026-08-27T12:45:49.658117+00:00",
+      "id": "EVT-02727",
+      "timestamp": "2026-08-27T14:28:01.092433+00:00",
       "type": "ComplianceViolation",
       "source": "Compliance Agent",
       "description": "Compliance Monitor Agent \u2014 Error: LLM returned unsuccessful response",
       "severity": "warning"
     },
     {
-      "id": "EVT-02512",
-      "timestamp": "2026-08-27T12:45:49.667380+00:00",
+      "id": "EVT-02728",
+      "timestamp": "2026-08-27T14:28:01.101819+00:00",
       "type": "ComplianceViolation",
       "source": "Compliance Agent",
       "description": "Compliance Monitor Agent \u2014 Error: LLM returned unsuccessful response",
       "severity": "warning"
     },
     {
-      "id": "EVT-02513",
-      "timestamp": "2026-08-27T12:45:49.676652+00:00",
+      "id": "EVT-02729",
+      "timestamp": "2026-08-27T14:28:01.111484+00:00",
       "type": "ComplianceViolation",
       "source": "Compliance Agent",
       "description": "Compliance Monitor Agent \u2014 Error: LLM returned unsuccessful response",
       "severity": "warning"
     },
     {
-      "id": "EVT-02514",
-      "timestamp": "2026-08-27T12:45:49.726145+00:00",
+      "id": "EVT-02730",
+      "timestamp": "2026-08-27T14:28:12.310824+00:00",
       "type": "AgentRunStarted",
       "source": "Risk Agent",
       "description": "Risk agent analyzed 8 agents in 0.0s",
       "severity": "info"
     },
     {
-      "id": "EVT-02515",
-      "timestamp": "2026-08-27T12:45:49.731534+00:00",
-      "type": "RiskAssessed",
+      "id": "EVT-02731",
+      "timestamp": "2026-08-27T14:28:12.319020+00:00",
+      "type": "HighRiskDetected",
       "source": "Risk Agent",
-      "description": "Procurement Intelligence Agent \u2014 risk score: 0/100 (Low)",
-      "severity": "info"
+      "description": "Procurement Intelligence Agent \u2014 risk score: 75/100, High",
+      "severity": "high"
     },
     {
-      "id": "EVT-02516",
-      "timestamp": "2026-08-27T12:45:49.738521+00:00",
-      "type": "RiskAssessed",
+      "id": "EVT-02732",
+      "timestamp": "2026-08-27T14:28:12.328991+00:00",
+      "type": "HighRiskDetected",
       "source": "Risk Agent",
-      "description": "Compliance Monitor Agent \u2014 risk score: 0/100 (Low)",
-      "severity": "info"
+      "description": "Compliance Monitor Agent \u2014 risk score: 75/100, High",
+      "severity": "high"
     },
     {
-      "id": "EVT-02517",
-      "timestamp": "2026-08-27T12:45:49.747561+00:00",
-      "type": "RiskAssessed",
+      "id": "EVT-02733",
+      "timestamp": "2026-08-27T14:28:12.338251+00:00",
+      "type": "HighRiskDetected",
       "source": "Risk Agent",
-      "description": "Customer Insights Agent \u2014 risk score: 0/100 (Low)",
-      "severity": "info"
+      "description": "Customer Insights Agent \u2014 risk score: 75/100, High",
+      "severity": "high"
     },
     {
-      "id": "EVT-02518",
-      "timestamp": "2026-08-27T12:45:49.756588+00:00",
-      "type": "RiskAssessed",
+      "id": "EVT-02734",
+      "timestamp": "2026-08-27T14:28:12.347704+00:00",
+      "type": "HighRiskDetected",
       "source": "Risk Agent",
-      "description": "Data Warehouse Analyst Agent \u2014 risk score: 0/100 (Low)",
-      "severity": "info"
+      "description": "Data Warehouse Analyst Agent \u2014 risk score: 75/100, High",
+      "severity": "high"
     },
     {
-      "id": "EVT-02519",
-      "timestamp": "2026-08-27T12:45:49.765869+00:00",
-      "type": "RiskAssessed",
+      "id": "EVT-02735",
+      "timestamp": "2026-08-27T14:28:12.356594+00:00",
+      "type": "HighRiskDetected",
       "source": "Risk Agent",
-      "description": "MLOps Pipeline Agent \u2014 risk score: 0/100 (Low)",
-      "severity": "info"
+      "description": "MLOps Pipeline Agent \u2014 risk score: 75/100, High",
+      "severity": "high"
     },
     {
-      "id": "EVT-02520",
-      "timestamp": "2026-08-27T12:45:49.774592+00:00",
-      "type": "RiskAssessed",
+      "id": "EVT-02736",
+      "timestamp": "2026-08-27T14:28:12.362063+00:00",
+      "type": "HighRiskDetected",
       "source": "Risk Agent",
-      "description": "Security Threat Analyst Agent \u2014 risk score: 0/100 (Low)",
-      "severity": "info"
+      "description": "Security Threat Analyst Agent \u2014 risk score: 75/100, High",
+      "severity": "high"
     },
     {
-      "id": "EVT-02521",
-      "timestamp": "2026-08-27T12:45:49.783742+00:00",
-      "type": "RiskAssessed",
+      "id": "EVT-02737",
+      "timestamp": "2026-08-27T14:28:12.367110+00:00",
+      "type": "HighRiskDetected",
       "source": "Risk Agent",
-      "description": "HR Policy Assistant Agent \u2014 risk score: 0/100 (Low)",
-      "severity": "info"
+      "description": "HR Policy Assistant Agent \u2014 risk score: 75/100, High",
+      "severity": "high"
     },
     {
-      "id": "EVT-02522",
-      "timestamp": "2026-08-27T12:45:49.793307+00:00",
-      "type": "RiskAssessed",
+      "id": "EVT-02738",
+      "timestamp": "2026-08-27T14:28:12.372251+00:00",
+      "type": "HighRiskDetected",
       "source": "Risk Agent",
-      "description": "Finance Reporting Agent \u2014 risk score: 0/100 (Low)",
-      "severity": "info"
+      "description": "Finance Reporting Agent \u2014 risk score: 75/100, High",
+      "severity": "high"
     },
     {
-      "id": "EVT-02523",
-      "timestamp": "2026-08-27T12:45:49.843787+00:00",
+      "id": "EVT-02739",
+      "timestamp": "2026-08-27T14:28:23.555127+00:00",
       "type": "AgentRunStarted",
       "source": "Governance Agent",
       "description": "Governance agent analyzed 8 agents in 0.0s",
       "severity": "info"
     },
     {
-      "id": "EVT-02524",
-      "timestamp": "2026-08-27T12:45:49.848026+00:00",
+      "id": "EVT-02740",
+      "timestamp": "2026-08-27T14:28:23.564666+00:00",
       "type": "PolicyViolation",
       "source": "Governance Agent",
       "description": "Procurement Intelligence Agent \u2014 Agent handles financial data. Enhanced monitoring required.",
       "severity": "high"
     },
     {
-      "id": "EVT-02525",
-      "timestamp": "2026-08-27T12:45:49.852945+00:00",
-      "type": "PolicyViolation",
-      "source": "Governance Agent",
-      "description": "Procurement Intelligence Agent \u2014 Model/platform 'openai gpt' is not on the approved list.",
-      "severity": "high"
-    },
-    {
-      "id": "EVT-02526",
-      "timestamp": "2026-08-27T12:45:49.857860+00:00",
+      "id": "EVT-02741",
+      "timestamp": "2026-08-27T14:28:23.574454+00:00",
       "type": "PolicyViolation",
       "source": "Governance Agent",
       "description": "Compliance Monitor Agent \u2014 Agent has PII access without valid certification. Current status: Pending Review",
       "severity": "critical"
     },
     {
-      "id": "EVT-02527",
-      "timestamp": "2026-08-27T12:45:49.862816+00:00",
+      "id": "EVT-02742",
+      "timestamp": "2026-08-27T14:28:23.584163+00:00",
       "type": "PolicyViolation",
       "source": "Governance Agent",
       "description": "Compliance Monitor Agent \u2014 Agent handles financial data. Enhanced monitoring required.",
       "severity": "high"
     },
     {
-      "id": "EVT-02528",
-      "timestamp": "2026-08-27T12:45:49.868844+00:00",
-      "type": "PolicyViolation",
-      "source": "Governance Agent",
-      "description": "Compliance Monitor Agent \u2014 Model/platform 'microsoft copilot' is not on the approved list.",
-      "severity": "high"
-    },
-    {
-      "id": "EVT-02529",
-      "timestamp": "2026-08-27T12:45:49.873792+00:00",
-      "type": "PolicyViolation",
-      "source": "Governance Agent",
-      "description": "Customer Insights Agent \u2014 Model/platform 'anthropic claude' is not on the approved list.",
-      "severity": "high"
-    },
-    {
-      "id": "EVT-02530",
-      "timestamp": "2026-08-27T12:45:49.878706+00:00",
+      "id": "EVT-02743",
+      "timestamp": "2026-08-27T14:28:23.592906+00:00",
       "type": "PolicyViolation",
       "source": "Governance Agent",
       "description": "Data Warehouse Analyst Agent \u2014 Agent handles financial data. Enhanced monitoring required.",
       "severity": "high"
     },
     {
-      "id": "EVT-02531",
-      "timestamp": "2026-08-27T12:45:49.883676+00:00",
+      "id": "EVT-02744",
+      "timestamp": "2026-08-27T14:28:23.601898+00:00",
       "type": "PolicyViolation",
       "source": "Governance Agent",
-      "description": "Data Warehouse Analyst Agent \u2014 Model/platform 'snowflake cortex' is not on the approved list.",
+      "description": "Data Warehouse Analyst Agent \u2014 Model 'snowflake-cortex' is not on the approved list.",
       "severity": "high"
     },
     {
-      "id": "EVT-02532",
-      "timestamp": "2026-08-27T12:45:49.888540+00:00",
+      "id": "EVT-02745",
+      "timestamp": "2026-08-27T14:28:23.611730+00:00",
       "type": "PolicyViolation",
       "source": "Governance Agent",
-      "description": "MLOps Pipeline Agent \u2014 Model/platform 'databricks ai' is not on the approved list.",
+      "description": "MLOps Pipeline Agent \u2014 Model 'databricks-dbrx' is not on the approved list.",
       "severity": "high"
     },
     {
-      "id": "EVT-02533",
-      "timestamp": "2026-08-27T12:45:49.893473+00:00",
+      "id": "EVT-02746",
+      "timestamp": "2026-08-27T14:28:23.621073+00:00",
       "type": "PolicyViolation",
       "source": "Governance Agent",
-      "description": "Security Threat Analyst Agent \u2014 Model/platform 'openai gpt' is not on the approved list.",
+      "description": "Finance Reporting Agent \u2014 Agent handles financial data. Enhanced monitoring required.",
       "severity": "high"
     },
     {
-      "id": "EVT-02534",
-      "timestamp": "2026-08-27T12:45:49.930980+00:00",
+      "id": "EVT-02747",
+      "timestamp": "2026-08-27T14:28:34.918424+00:00",
       "type": "AgentRunStarted",
       "source": "Cost Agent",
       "description": "Cost agent analyzed 8 agents in 0.0s",
       "severity": "info"
     },
     {
-      "id": "EVT-02535",
-      "timestamp": "2026-08-27T12:45:49.936169+00:00",
+      "id": "EVT-02748",
+      "timestamp": "2026-08-27T14:28:34.920538+00:00",
       "type": "CostAnalyzed",
       "source": "Cost Agent",
-      "description": "Total monthly spend: $30.54, 0 anomalies found",
+      "description": "Total monthly spend: $31.99, 0 anomalies found",
       "severity": "info"
     },
     {
-      "id": "EVT-02536",
-      "timestamp": "2026-08-27T12:45:55.789821+00:00",
+      "id": "EVT-02749",
+      "timestamp": "2026-08-27T14:28:51.290613+00:00",
       "type": "AgentRunStarted",
       "source": "Health Agent",
-      "description": "Health agent analyzed 8 agents in 5.79s",
+      "description": "Health agent analyzed 8 agents in 5.3s",
       "severity": "info"
     },
     {
-      "id": "EVT-02537",
-      "timestamp": "2026-08-27T12:45:55.799578+00:00",
+      "id": "EVT-02750",
+      "timestamp": "2026-08-27T14:28:51.296968+00:00",
       "type": "HealthCheckPassed",
       "source": "Health Agent",
-      "description": "Procurement Intelligence Agent \u2014 healthy (656ms)",
+      "description": "Procurement Intelligence Agent \u2014 healthy (619ms)",
       "severity": "info"
     },
     {
-      "id": "EVT-02538",
-      "timestamp": "2026-08-27T12:45:55.808278+00:00",
+      "id": "EVT-02751",
+      "timestamp": "2026-08-27T14:28:51.302140+00:00",
       "type": "HealthCheckPassed",
       "source": "Health Agent",
-      "description": "Compliance Monitor Agent \u2014 healthy (574ms)",
+      "description": "Compliance Monitor Agent \u2014 healthy (687ms)",
       "severity": "info"
     },
     {
-      "id": "EVT-02539",
-      "timestamp": "2026-08-27T12:45:55.817055+00:00",
+      "id": "EVT-02752",
+      "timestamp": "2026-08-27T14:28:51.306499+00:00",
       "type": "HealthCheckPassed",
       "source": "Health Agent",
-      "description": "Customer Insights Agent \u2014 healthy (407ms)",
+      "description": "Customer Insights Agent \u2014 healthy (510ms)",
       "severity": "info"
     },
     {
-      "id": "EVT-02540",
-      "timestamp": "2026-08-27T12:45:55.826778+00:00",
+      "id": "EVT-02753",
+      "timestamp": "2026-08-27T14:28:51.310729+00:00",
       "type": "HealthCheckFailed",
       "source": "Health Agent",
       "description": "Data Warehouse Analyst Agent \u2014 Degraded: Endpoint unreachable",
       "severity": "warning"
     },
     {
-      "id": "EVT-02541",
-      "timestamp": "2026-08-27T12:45:55.835796+00:00",
+      "id": "EVT-02754",
+      "timestamp": "2026-08-27T14:28:51.315667+00:00",
       "type": "HealthCheckPassed",
       "source": "Health Agent",
-      "description": "MLOps Pipeline Agent \u2014 healthy (2151ms)",
+      "description": "MLOps Pipeline Agent \u2014 healthy (1740ms)",
       "severity": "info"
     },
     {
-      "id": "EVT-02542",
-      "timestamp": "2026-08-27T12:45:55.845395+00:00",
+      "id": "EVT-02755",
+      "timestamp": "2026-08-27T14:28:51.321557+00:00",
       "type": "HealthCheckPassed",
       "source": "Health Agent",
-      "description": "Security Threat Analyst Agent \u2014 healthy (715ms)",
+      "description": "Security Threat Analyst Agent \u2014 healthy (713ms)",
       "severity": "info"
     },
     {
-      "id": "EVT-02543",
-      "timestamp": "2026-08-27T12:45:55.854605+00:00",
+      "id": "EVT-02756",
+      "timestamp": "2026-08-27T14:28:51.326546+00:00",
       "type": "HealthCheckPassed",
       "source": "Health Agent",
-      "description": "HR Policy Assistant Agent \u2014 healthy (306ms)",
+      "description": "HR Policy Assistant Agent \u2014 healthy (204ms)",
       "severity": "info"
     },
     {
-      "id": "EVT-02544",
-      "timestamp": "2026-08-27T12:45:55.864966+00:00",
+      "id": "EVT-02757",
+      "timestamp": "2026-08-27T14:28:51.331579+00:00",
       "type": "HealthCheckPassed",
       "source": "Health Agent",
-      "description": "Finance Reporting Agent \u2014 healthy (768ms)",
+      "description": "Finance Reporting Agent \u2014 healthy (716ms)",
       "severity": "info"
     },
     {
-      "id": "EVT-02545",
-      "timestamp": "2026-08-27T12:45:55.932012+00:00",
-      "type": "AgentRunStarted",
-      "source": "Audit Agent",
-      "description": "Audit agent analyzed 8 agents in 0.01s",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02546",
-      "timestamp": "2026-08-27T12:45:55.937046+00:00",
-      "type": "AuditCompleted",
-      "source": "Audit Agent",
-      "description": "Audit completed \u2014 13 open findings, 1 critical",
-      "severity": "high"
-    },
-    {
-      "id": "EVT-02547",
-      "timestamp": "2026-08-27T14:06:49.734468+00:00",
-      "type": "AgentRunStarted",
-      "source": "Compliance Agent",
-      "description": "Compliance agent analyzed 8 agents in 0.0s",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02548",
-      "timestamp": "2026-08-27T14:06:49.745919+00:00",
-      "type": "ComplianceViolation",
-      "source": "Compliance Agent",
-      "description": "Procurement Intelligence Agent \u2014 Error: LLM returned unsuccessful response",
-      "severity": "warning"
-    },
-    {
-      "id": "EVT-02549",
-      "timestamp": "2026-08-27T14:06:49.754915+00:00",
-      "type": "ComplianceViolation",
-      "source": "Compliance Agent",
-      "description": "Procurement Intelligence Agent \u2014 Error: LLM returned unsuccessful response",
-      "severity": "warning"
-    },
-    {
-      "id": "EVT-02550",
-      "timestamp": "2026-08-27T14:06:49.763392+00:00",
-      "type": "ComplianceViolation",
-      "source": "Compliance Agent",
-      "description": "Procurement Intelligence Agent \u2014 Error: LLM returned unsuccessful response",
-      "severity": "warning"
-    },
-    {
-      "id": "EVT-02551",
-      "timestamp": "2026-08-27T14:06:49.772169+00:00",
-      "type": "ComplianceViolation",
-      "source": "Compliance Agent",
-      "description": "Procurement Intelligence Agent \u2014 Error: LLM returned unsuccessful response",
-      "severity": "warning"
-    },
-    {
-      "id": "EVT-02552",
-      "timestamp": "2026-08-27T14:06:49.781616+00:00",
-      "type": "ComplianceViolation",
-      "source": "Compliance Agent",
-      "description": "Procurement Intelligence Agent \u2014 Error: LLM returned unsuccessful response",
-      "severity": "warning"
-    },
-    {
-      "id": "EVT-02553",
-      "timestamp": "2026-08-27T14:06:49.790157+00:00",
-      "type": "ComplianceViolation",
-      "source": "Compliance Agent",
-      "description": "Compliance Monitor Agent \u2014 Error: LLM returned unsuccessful response",
-      "severity": "warning"
-    },
-    {
-      "id": "EVT-02554",
-      "timestamp": "2026-08-27T14:06:49.799884+00:00",
-      "type": "ComplianceViolation",
-      "source": "Compliance Agent",
-      "description": "Compliance Monitor Agent \u2014 Error: LLM returned unsuccessful response",
-      "severity": "warning"
-    },
-    {
-      "id": "EVT-02555",
-      "timestamp": "2026-08-27T14:06:49.809653+00:00",
-      "type": "ComplianceViolation",
-      "source": "Compliance Agent",
-      "description": "Compliance Monitor Agent \u2014 Error: LLM returned unsuccessful response",
-      "severity": "warning"
-    },
-    {
-      "id": "EVT-02556",
-      "timestamp": "2026-08-27T14:06:49.818902+00:00",
-      "type": "ComplianceViolation",
-      "source": "Compliance Agent",
-      "description": "Compliance Monitor Agent \u2014 Error: LLM returned unsuccessful response",
-      "severity": "warning"
-    },
-    {
-      "id": "EVT-02557",
-      "timestamp": "2026-08-27T14:06:49.828369+00:00",
-      "type": "ComplianceViolation",
-      "source": "Compliance Agent",
-      "description": "Compliance Monitor Agent \u2014 Error: LLM returned unsuccessful response",
-      "severity": "warning"
-    },
-    {
-      "id": "EVT-02558",
-      "timestamp": "2026-08-27T14:06:49.907454+00:00",
-      "type": "AgentRunStarted",
-      "source": "Risk Agent",
-      "description": "Risk agent analyzed 8 agents in 0.01s",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02559",
-      "timestamp": "2026-08-27T14:06:49.912812+00:00",
-      "type": "RiskAssessed",
-      "source": "Risk Agent",
-      "description": "Procurement Intelligence Agent \u2014 risk score: 0/100 (Low)",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02560",
-      "timestamp": "2026-08-27T14:06:49.918694+00:00",
-      "type": "RiskAssessed",
-      "source": "Risk Agent",
-      "description": "Compliance Monitor Agent \u2014 risk score: 0/100 (Low)",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02561",
-      "timestamp": "2026-08-27T14:06:49.923577+00:00",
-      "type": "RiskAssessed",
-      "source": "Risk Agent",
-      "description": "Customer Insights Agent \u2014 risk score: 0/100 (Low)",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02562",
-      "timestamp": "2026-08-27T14:06:49.929152+00:00",
-      "type": "RiskAssessed",
-      "source": "Risk Agent",
-      "description": "Data Warehouse Analyst Agent \u2014 risk score: 0/100 (Low)",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02563",
-      "timestamp": "2026-08-27T14:06:49.935292+00:00",
-      "type": "RiskAssessed",
-      "source": "Risk Agent",
-      "description": "MLOps Pipeline Agent \u2014 risk score: 0/100 (Low)",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02564",
-      "timestamp": "2026-08-27T14:06:49.940841+00:00",
-      "type": "RiskAssessed",
-      "source": "Risk Agent",
-      "description": "Security Threat Analyst Agent \u2014 risk score: 0/100 (Low)",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02565",
-      "timestamp": "2026-08-27T14:06:49.946612+00:00",
-      "type": "RiskAssessed",
-      "source": "Risk Agent",
-      "description": "HR Policy Assistant Agent \u2014 risk score: 0/100 (Low)",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02566",
-      "timestamp": "2026-08-27T14:06:49.951960+00:00",
-      "type": "RiskAssessed",
-      "source": "Risk Agent",
-      "description": "Finance Reporting Agent \u2014 risk score: 0/100 (Low)",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02567",
-      "timestamp": "2026-08-27T14:06:49.991501+00:00",
-      "type": "AgentRunStarted",
-      "source": "Governance Agent",
-      "description": "Governance agent analyzed 8 agents in 0.0s",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02568",
-      "timestamp": "2026-08-27T14:06:50.000378+00:00",
-      "type": "PolicyViolation",
-      "source": "Governance Agent",
-      "description": "Procurement Intelligence Agent \u2014 Agent handles financial data. Enhanced monitoring required.",
-      "severity": "high"
-    },
-    {
-      "id": "EVT-02569",
-      "timestamp": "2026-08-27T14:06:50.010282+00:00",
-      "type": "PolicyViolation",
-      "source": "Governance Agent",
-      "description": "Procurement Intelligence Agent \u2014 Model/platform 'openai gpt' is not on the approved list.",
-      "severity": "high"
-    },
-    {
-      "id": "EVT-02570",
-      "timestamp": "2026-08-27T14:06:50.019803+00:00",
-      "type": "PolicyViolation",
-      "source": "Governance Agent",
-      "description": "Compliance Monitor Agent \u2014 Agent has PII access without valid certification. Current status: Pending Review",
-      "severity": "critical"
-    },
-    {
-      "id": "EVT-02571",
-      "timestamp": "2026-08-27T14:06:50.032576+00:00",
-      "type": "PolicyViolation",
-      "source": "Governance Agent",
-      "description": "Compliance Monitor Agent \u2014 Agent handles financial data. Enhanced monitoring required.",
-      "severity": "high"
-    },
-    {
-      "id": "EVT-02572",
-      "timestamp": "2026-08-27T14:06:50.041249+00:00",
-      "type": "PolicyViolation",
-      "source": "Governance Agent",
-      "description": "Compliance Monitor Agent \u2014 Model/platform 'microsoft copilot' is not on the approved list.",
-      "severity": "high"
-    },
-    {
-      "id": "EVT-02573",
-      "timestamp": "2026-08-27T14:06:50.051041+00:00",
-      "type": "PolicyViolation",
-      "source": "Governance Agent",
-      "description": "Customer Insights Agent \u2014 Model/platform 'anthropic claude' is not on the approved list.",
-      "severity": "high"
-    },
-    {
-      "id": "EVT-02574",
-      "timestamp": "2026-08-27T14:06:50.060348+00:00",
-      "type": "PolicyViolation",
-      "source": "Governance Agent",
-      "description": "Data Warehouse Analyst Agent \u2014 Agent handles financial data. Enhanced monitoring required.",
-      "severity": "high"
-    },
-    {
-      "id": "EVT-02575",
-      "timestamp": "2026-08-27T14:06:50.068947+00:00",
-      "type": "PolicyViolation",
-      "source": "Governance Agent",
-      "description": "Data Warehouse Analyst Agent \u2014 Model/platform 'snowflake cortex' is not on the approved list.",
-      "severity": "high"
-    },
-    {
-      "id": "EVT-02576",
-      "timestamp": "2026-08-27T14:06:50.078133+00:00",
-      "type": "PolicyViolation",
-      "source": "Governance Agent",
-      "description": "MLOps Pipeline Agent \u2014 Model/platform 'databricks ai' is not on the approved list.",
-      "severity": "high"
-    },
-    {
-      "id": "EVT-02577",
-      "timestamp": "2026-08-27T14:06:50.087588+00:00",
-      "type": "PolicyViolation",
-      "source": "Governance Agent",
-      "description": "Security Threat Analyst Agent \u2014 Model/platform 'openai gpt' is not on the approved list.",
-      "severity": "high"
-    },
-    {
-      "id": "EVT-02578",
-      "timestamp": "2026-08-27T14:06:50.145476+00:00",
-      "type": "AgentRunStarted",
-      "source": "Cost Agent",
-      "description": "Cost agent analyzed 8 agents in 0.0s",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02579",
-      "timestamp": "2026-08-27T14:06:50.150278+00:00",
-      "type": "CostAnalyzed",
-      "source": "Cost Agent",
-      "description": "Total monthly spend: $30.93, 0 anomalies found",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02580",
-      "timestamp": "2026-08-27T14:06:55.507796+00:00",
-      "type": "AgentRunStarted",
-      "source": "Health Agent",
-      "description": "Health agent analyzed 8 agents in 5.29s",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02581",
-      "timestamp": "2026-08-27T14:06:55.517292+00:00",
-      "type": "HealthCheckPassed",
-      "source": "Health Agent",
-      "description": "Procurement Intelligence Agent \u2014 healthy (678ms)",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02582",
-      "timestamp": "2026-08-27T14:06:55.525665+00:00",
-      "type": "HealthCheckPassed",
-      "source": "Health Agent",
-      "description": "Compliance Monitor Agent \u2014 healthy (613ms)",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02583",
-      "timestamp": "2026-08-27T14:06:55.534771+00:00",
-      "type": "HealthCheckPassed",
-      "source": "Health Agent",
-      "description": "Customer Insights Agent \u2014 healthy (507ms)",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02584",
-      "timestamp": "2026-08-27T14:06:55.543840+00:00",
-      "type": "HealthCheckFailed",
-      "source": "Health Agent",
-      "description": "Data Warehouse Analyst Agent \u2014 Degraded: Endpoint unreachable",
-      "severity": "warning"
-    },
-    {
-      "id": "EVT-02585",
-      "timestamp": "2026-08-27T14:06:55.552763+00:00",
-      "type": "HealthCheckPassed",
-      "source": "Health Agent",
-      "description": "MLOps Pipeline Agent \u2014 healthy (1944ms)",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02586",
-      "timestamp": "2026-08-27T14:06:55.562170+00:00",
-      "type": "HealthCheckPassed",
-      "source": "Health Agent",
-      "description": "Security Threat Analyst Agent \u2014 healthy (596ms)",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02587",
-      "timestamp": "2026-08-27T14:06:55.571040+00:00",
-      "type": "HealthCheckPassed",
-      "source": "Health Agent",
-      "description": "HR Policy Assistant Agent \u2014 healthy (229ms)",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02588",
-      "timestamp": "2026-08-27T14:06:55.579389+00:00",
-      "type": "HealthCheckPassed",
-      "source": "Health Agent",
-      "description": "Finance Reporting Agent \u2014 healthy (607ms)",
-      "severity": "info"
-    },
-    {
-      "id": "EVT-02589",
-      "timestamp": "2026-08-27T14:06:55.624476+00:00",
+      "id": "EVT-02758",
+      "timestamp": "2026-08-27T14:29:02.281949+00:00",
       "type": "AgentRunStarted",
       "source": "Audit Agent",
       "description": "Audit agent analyzed 8 agents in 0.0s",
       "severity": "info"
     },
     {
-      "id": "EVT-02590",
-      "timestamp": "2026-08-27T14:06:55.630859+00:00",
+      "id": "EVT-02759",
+      "timestamp": "2026-08-27T14:29:02.288295+00:00",
       "type": "AuditCompleted",
       "source": "Audit Agent",
-      "description": "Audit completed \u2014 13 open findings, 1 critical",
+      "description": "Audit completed \u2014 55 open findings, 1 critical",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02760",
+      "timestamp": "2026-08-27T14:37:17.751922+00:00",
+      "type": "AgentRunStarted",
+      "source": "Compliance Agent",
+      "description": "Compliance agent analyzed 8 agents in 0.0s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-02761",
+      "timestamp": "2026-08-27T14:37:17.759839+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "Procurement Intelligence Agent \u2014 Error: LLM returned unsuccessful response",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-02762",
+      "timestamp": "2026-08-27T14:37:17.769394+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "Procurement Intelligence Agent \u2014 Error: LLM returned unsuccessful response",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-02763",
+      "timestamp": "2026-08-27T14:37:17.778228+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "Procurement Intelligence Agent \u2014 Error: LLM returned unsuccessful response",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-02764",
+      "timestamp": "2026-08-27T14:37:17.787805+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "Procurement Intelligence Agent \u2014 Error: LLM returned unsuccessful response",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-02765",
+      "timestamp": "2026-08-27T14:37:17.797339+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "Procurement Intelligence Agent \u2014 Error: LLM returned unsuccessful response",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-02766",
+      "timestamp": "2026-08-27T14:37:17.806550+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "Compliance Monitor Agent \u2014 Error: LLM returned unsuccessful response",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-02767",
+      "timestamp": "2026-08-27T14:37:17.815816+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "Compliance Monitor Agent \u2014 Error: LLM returned unsuccessful response",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-02768",
+      "timestamp": "2026-08-27T14:37:17.825039+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "Compliance Monitor Agent \u2014 Error: LLM returned unsuccessful response",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-02769",
+      "timestamp": "2026-08-27T14:37:17.834472+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "Compliance Monitor Agent \u2014 Error: LLM returned unsuccessful response",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-02770",
+      "timestamp": "2026-08-27T14:37:17.843809+00:00",
+      "type": "ComplianceViolation",
+      "source": "Compliance Agent",
+      "description": "Compliance Monitor Agent \u2014 Error: LLM returned unsuccessful response",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-02771",
+      "timestamp": "2026-08-27T14:37:17.932652+00:00",
+      "type": "AgentRunStarted",
+      "source": "Risk Agent",
+      "description": "Risk agent analyzed 8 agents in 0.0s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-02772",
+      "timestamp": "2026-08-27T14:37:17.941987+00:00",
+      "type": "HighRiskDetected",
+      "source": "Risk Agent",
+      "description": "Procurement Intelligence Agent \u2014 risk score: 75/100, High",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02773",
+      "timestamp": "2026-08-27T14:37:17.953862+00:00",
+      "type": "HighRiskDetected",
+      "source": "Risk Agent",
+      "description": "Compliance Monitor Agent \u2014 risk score: 75/100, High",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02774",
+      "timestamp": "2026-08-27T14:37:17.964514+00:00",
+      "type": "HighRiskDetected",
+      "source": "Risk Agent",
+      "description": "Customer Insights Agent \u2014 risk score: 75/100, High",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02775",
+      "timestamp": "2026-08-27T14:37:17.973799+00:00",
+      "type": "HighRiskDetected",
+      "source": "Risk Agent",
+      "description": "Data Warehouse Analyst Agent \u2014 risk score: 75/100, High",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02776",
+      "timestamp": "2026-08-27T14:37:17.985802+00:00",
+      "type": "HighRiskDetected",
+      "source": "Risk Agent",
+      "description": "MLOps Pipeline Agent \u2014 risk score: 75/100, High",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02777",
+      "timestamp": "2026-08-27T14:37:17.994949+00:00",
+      "type": "HighRiskDetected",
+      "source": "Risk Agent",
+      "description": "Security Threat Analyst Agent \u2014 risk score: 75/100, High",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02778",
+      "timestamp": "2026-08-27T14:37:18.004827+00:00",
+      "type": "HighRiskDetected",
+      "source": "Risk Agent",
+      "description": "HR Policy Assistant Agent \u2014 risk score: 75/100, High",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02779",
+      "timestamp": "2026-08-27T14:37:18.014091+00:00",
+      "type": "HighRiskDetected",
+      "source": "Risk Agent",
+      "description": "Finance Reporting Agent \u2014 risk score: 75/100, High",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02780",
+      "timestamp": "2026-08-27T14:37:18.100258+00:00",
+      "type": "AgentRunStarted",
+      "source": "Governance Agent",
+      "description": "Governance agent analyzed 8 agents in 0.0s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-02781",
+      "timestamp": "2026-08-27T14:37:18.113244+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "Procurement Intelligence Agent \u2014 Agent handles financial data. Enhanced monitoring required.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02782",
+      "timestamp": "2026-08-27T14:37:18.135095+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "Compliance Monitor Agent \u2014 Agent has PII access without valid certification. Current status: Pending Review",
+      "severity": "critical"
+    },
+    {
+      "id": "EVT-02783",
+      "timestamp": "2026-08-27T14:37:18.159406+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "Compliance Monitor Agent \u2014 Agent handles financial data. Enhanced monitoring required.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02784",
+      "timestamp": "2026-08-27T14:37:18.169010+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "Data Warehouse Analyst Agent \u2014 Agent handles financial data. Enhanced monitoring required.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02785",
+      "timestamp": "2026-08-27T14:37:18.178288+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "Data Warehouse Analyst Agent \u2014 Model 'snowflake-cortex' is not on the approved list.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02786",
+      "timestamp": "2026-08-27T14:37:18.187080+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "MLOps Pipeline Agent \u2014 Model 'databricks-dbrx' is not on the approved list.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02787",
+      "timestamp": "2026-08-27T14:37:18.196455+00:00",
+      "type": "PolicyViolation",
+      "source": "Governance Agent",
+      "description": "Finance Reporting Agent \u2014 Agent handles financial data. Enhanced monitoring required.",
+      "severity": "high"
+    },
+    {
+      "id": "EVT-02788",
+      "timestamp": "2026-08-27T14:37:18.294814+00:00",
+      "type": "AgentRunStarted",
+      "source": "Cost Agent",
+      "description": "Cost agent analyzed 8 agents in 0.0s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-02789",
+      "timestamp": "2026-08-27T14:37:18.303151+00:00",
+      "type": "CostAnalyzed",
+      "source": "Cost Agent",
+      "description": "Total monthly spend: $31.99, 0 anomalies found",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-02790",
+      "timestamp": "2026-08-27T14:37:22.486012+00:00",
+      "type": "AgentRunStarted",
+      "source": "Health Agent",
+      "description": "Health agent analyzed 8 agents in 4.11s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-02791",
+      "timestamp": "2026-08-27T14:37:22.490292+00:00",
+      "type": "HealthCheckPassed",
+      "source": "Health Agent",
+      "description": "Procurement Intelligence Agent \u2014 healthy (587ms)",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-02792",
+      "timestamp": "2026-08-27T14:37:22.494508+00:00",
+      "type": "HealthCheckPassed",
+      "source": "Health Agent",
+      "description": "Compliance Monitor Agent \u2014 healthy (539ms)",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-02793",
+      "timestamp": "2026-08-27T14:37:22.499568+00:00",
+      "type": "HealthCheckPassed",
+      "source": "Health Agent",
+      "description": "Customer Insights Agent \u2014 healthy (183ms)",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-02794",
+      "timestamp": "2026-08-27T14:37:22.504702+00:00",
+      "type": "HealthCheckFailed",
+      "source": "Health Agent",
+      "description": "Data Warehouse Analyst Agent \u2014 Degraded: Endpoint unreachable",
+      "severity": "warning"
+    },
+    {
+      "id": "EVT-02795",
+      "timestamp": "2026-08-27T14:37:22.509981+00:00",
+      "type": "HealthCheckPassed",
+      "source": "Health Agent",
+      "description": "MLOps Pipeline Agent \u2014 healthy (1664ms)",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-02796",
+      "timestamp": "2026-08-27T14:37:22.515649+00:00",
+      "type": "HealthCheckPassed",
+      "source": "Health Agent",
+      "description": "Security Threat Analyst Agent \u2014 healthy (407ms)",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-02797",
+      "timestamp": "2026-08-27T14:37:22.524140+00:00",
+      "type": "HealthCheckPassed",
+      "source": "Health Agent",
+      "description": "HR Policy Assistant Agent \u2014 healthy (198ms)",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-02798",
+      "timestamp": "2026-08-27T14:37:22.533595+00:00",
+      "type": "HealthCheckPassed",
+      "source": "Health Agent",
+      "description": "Finance Reporting Agent \u2014 healthy (473ms)",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-02799",
+      "timestamp": "2026-08-27T14:37:22.619369+00:00",
+      "type": "AgentRunStarted",
+      "source": "Audit Agent",
+      "description": "Audit agent analyzed 8 agents in 0.01s",
+      "severity": "info"
+    },
+    {
+      "id": "EVT-02800",
+      "timestamp": "2026-08-27T14:37:22.628298+00:00",
+      "type": "AuditCompleted",
+      "source": "Audit Agent",
+      "description": "Audit completed \u2014 55 open findings, 1 critical",
       "severity": "high"
     }
   ],
-  "counter": 2590
+  "counter": 2800
 }

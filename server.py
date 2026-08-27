@@ -25,6 +25,7 @@ import json
 import os
 import sqlite3
 import sys
+import threading
 import time
 import traceback
 import urllib.parse
@@ -48,10 +49,40 @@ def _demo_mode():
 
 DB_FILE = os.path.join(PROJECT_ROOT, 'aether.db')
 
+# The server runs as a ThreadingHTTPServer (see bottom of file), so every
+# incoming request — including the frontend's frequent polling of
+# /api/agents, /api/events, /api/db-stats, /api/results — is handled on its
+# own thread and can open a SQLite connection concurrently with a write
+# elsewhere. Two things make that safe instead of producing the
+# "database is locked" / "UNIQUE constraint failed" errors this used to
+# throw under real concurrent load (especially on Windows, where SQLite's
+# file-locking is stricter than on Linux):
+#   1. WAL journal mode (enabled once, below) lets readers proceed without
+#      blocking on — or being blocked by — the single writer.
+#   2. A process-wide RLock serializes this process's own writes so they
+#      never race each other for SQLite's single-writer slot; RLock (not
+#      Lock) because some handlers call one locked helper from inside
+#      another on the same thread, and a plain Lock would deadlock on that.
+_DB_WRITE_LOCK = threading.RLock()
+
+def _db_connect():
+    """Open a SQLite connection with a generous busy timeout.
+
+    The stdlib default is 5s, which is too short once several threads are
+    each waiting on the single writer — that's what previously surfaced as
+    "database is locked" under real (especially Windows) concurrent use.
+    """
+    return sqlite3.connect(DB_FILE, timeout=30)
+
 def _init_db():
     """Initialize the SQLite database and create tables if they do not exist."""
-    conn = sqlite3.connect(DB_FILE)
+    conn = _db_connect()
     cursor = conn.cursor()
+    # WAL mode: readers no longer block on the writer (and vice versa),
+    # which is the single biggest fix for lock contention under the
+    # frontend's frequent read-polling. Persists in the DB file itself,
+    # so this only needs to run once, here, not on every connection.
+    cursor.execute("PRAGMA journal_mode=WAL")
     
     # 1. Create agents table
     cursor.execute('''
@@ -184,37 +215,38 @@ def _load_agents_from_json():
 
 def _sync_json_to_sqlite():
     """Migrate agents from JSON file to SQLite if database is empty."""
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM agents")
-    count = cursor.fetchone()[0]
-    conn.close()
-    
-    if count == 0:
-        json_agents = _load_agents_from_json()
-        if json_agents:
-            print(f"[DB] Migrating {len(json_agents)} agents from agents.json to SQLite database...")
-            conn = sqlite3.connect(DB_FILE)
-            cursor = conn.cursor()
-            for a in json_agents:
-                cursor.execute('''
-                    INSERT OR REPLACE INTO agents (
-                        id, name, platform, department, owner, status, environment, purpose,
-                        endpoint, piiAccess, financialAccess, riskScore, certificationStatus,
-                        region, monthlyCost, tasksExecuted, successRate, availability,
-                        avgLatency, tokenUsage, model, criticality, onboardedAt, lastSeen
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    a.get('id'), a.get('name'), a.get('platform'), a.get('department'), a.get('owner'),
-                    a.get('status', 'Active'), a.get('environment'), a.get('purpose'), a.get('endpoint'),
-                    1 if a.get('piiAccess') else 0, 1 if a.get('financialAccess') else 0,
-                    a.get('riskScore', 0), a.get('certificationStatus'), a.get('region'),
-                    a.get('monthlyCost', 0.0), a.get('tasksExecuted', 0), a.get('successRate'),
-                    a.get('availability'), a.get('avgLatency', 0.0), a.get('tokenUsage', 0),
-                    a.get('model'), a.get('criticality'), a.get('onboardedAt'), a.get('lastSeen')
-                ))
-            conn.commit()
-            conn.close()
+    with _DB_WRITE_LOCK:
+        conn = _db_connect()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM agents")
+        count = cursor.fetchone()[0]
+        conn.close()
+
+        if count == 0:
+            json_agents = _load_agents_from_json()
+            if json_agents:
+                print(f"[DB] Migrating {len(json_agents)} agents from agents.json to SQLite database...")
+                conn = _db_connect()
+                cursor = conn.cursor()
+                for a in json_agents:
+                    cursor.execute('''
+                        INSERT OR REPLACE INTO agents (
+                            id, name, platform, department, owner, status, environment, purpose,
+                            endpoint, piiAccess, financialAccess, riskScore, certificationStatus,
+                            region, monthlyCost, tasksExecuted, successRate, availability,
+                            avgLatency, tokenUsage, model, criticality, onboardedAt, lastSeen
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (
+                        a.get('id'), a.get('name'), a.get('platform'), a.get('department'), a.get('owner'),
+                        a.get('status', 'Active'), a.get('environment'), a.get('purpose'), a.get('endpoint'),
+                        1 if a.get('piiAccess') else 0, 1 if a.get('financialAccess') else 0,
+                        a.get('riskScore', 0), a.get('certificationStatus'), a.get('region'),
+                        a.get('monthlyCost', 0.0), a.get('tasksExecuted', 0), a.get('successRate'),
+                        a.get('availability'), a.get('avgLatency', 0.0), a.get('tokenUsage', 0),
+                        a.get('model'), a.get('criticality'), a.get('onboardedAt'), a.get('lastSeen')
+                    ))
+                conn.commit()
+                conn.close()
 
 def get_model_details(model_field, platform):
     model = (model_field or "").strip()
@@ -365,7 +397,7 @@ def _compute_cost_recommendations():
     cost optimization recommendations with quantified savings estimates.
     """
     try:
-        conn = sqlite3.connect(DB_FILE)
+        conn = _db_connect()
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
@@ -504,7 +536,7 @@ def _seed_historical_tasks():
     
     print("[DB] Checking if tasks need to be seeded...")
     try:
-        conn = sqlite3.connect(DB_FILE)
+        conn = _db_connect()
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM tasks")
         count = cursor.fetchone()[0]
@@ -585,89 +617,98 @@ def log_new_tasks_for_run_all(agents_list):
     
     print("[DB] Logging new tasks for run-all cycle...")
     try:
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
-        
-        task_types = [
-            ("Database Query", "Executed read query on client records.", 120, 800, 200, 4000),
-            ("API Integration", "Synched inventory status with external partner API.", 350, 1800, 500, 6000),
-            ("Log Parsing", "Processed and filtered access logs for anomalies.", 50, 600, 100, 2000)
-        ]
-        
-        now = datetime.now(timezone.utc)
-        
-        for agent in agents_list:
-            num_tasks = random.randint(1, 3)
-            for _ in range(num_tasks):
-                task_name, base_desc, min_dur, max_dur, min_tok, max_tok = random.choice(task_types)
-                status = "Success" if random.random() < 0.95 else "Failed"
-                duration = random.randint(min_dur, max_dur)
-                tokens = random.randint(min_tok, max_tok)
-                
-                details = get_model_details(agent.get('model'), agent.get('platform'))
-                in_tok = int(tokens * 0.75)
-                out_tok = int(tokens * 0.25)
-                cost = round((in_tok * details["input_rate"]) + (out_tok * details["output_rate"]), 5)
-                
-                desc = f"Completed during run-all cycle: {base_desc}" if status == "Success" else f"Failed during run-all cycle: {base_desc}"
-                task_id = f"TSK-{uuid.uuid4().hex[:8].upper()}"
-                
-                # Insert task log
-                cursor.execute('''
-                    INSERT INTO tasks (
-                        id, agent_id, agent_name, timestamp, status, duration_ms, cost, tokens, task_type, description,
-                        model, input_tokens, output_tokens
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (task_id, agent.get('id'), agent.get('name'), now.isoformat(), status, duration, cost, tokens, task_name, desc,
-                      details["model"], in_tok, out_tok))
-                
-                # Update agent execution metrics
-                cursor.execute('''
-                    UPDATE agents 
-                    SET tasksExecuted = tasksExecuted + 1,
-                        tokenUsage = tokenUsage + ?,
-                        monthlyCost = monthlyCost + ?
-                    WHERE id = ?
-                ''', (tokens, cost, agent.get('id')))
-                
-        conn.commit()
-        
-        # Mirror updated agents to agents.json
-        cursor.execute("SELECT * FROM agents")
-        rows = cursor.fetchall()
-        updated_agents = []
-        for r in rows:
-            updated_agents.append({
-                'id': r['id'],
-                'name': r['name'],
-                'platform': r['platform'],
-                'department': r['department'],
-                'owner': r['owner'],
-                'status': r['status'],
-                'environment': r['environment'],
-                'purpose': r['purpose'],
-                'endpoint': r['endpoint'],
-                'piiAccess': bool(r['piiAccess']),
-                'financialAccess': bool(r['financialAccess']),
-                'riskScore': r['riskScore'],
-                'certificationStatus': r['certificationStatus'],
-                'region': r['region'],
-                'monthlyCost': r['monthlyCost'],
-                'tasksExecuted': r['tasksExecuted'],
-                'successRate': r['successRate'],
-                'availability': r['availability'],
-                'avgLatency': r['avgLatency'],
-                'tokenUsage': r['tokenUsage'],
-                'model': r['model'],
-                'criticality': r['criticality'],
-                'onboardedAt': r['onboardedAt'],
-                'lastSeen': r['lastSeen']
-            })
-        conn.close()
-        
+        with _DB_WRITE_LOCK:
+            conn = _db_connect()
+            # Required for the dict-style `r['id']` access below on the
+            # mirror-to-JSON read — without this, rows come back as plain
+            # tuples and that access raises TypeError. This previously went
+            # unnoticed because every run-all cycle was already failing
+            # earlier, on the "database is locked" write contention that
+            # the timeout/WAL/lock changes above fix — which meant this
+            # line was never actually reached in practice.
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            task_types = [
+                ("Database Query", "Executed read query on client records.", 120, 800, 200, 4000),
+                ("API Integration", "Synched inventory status with external partner API.", 350, 1800, 500, 6000),
+                ("Log Parsing", "Processed and filtered access logs for anomalies.", 50, 600, 100, 2000)
+            ]
+
+            now = datetime.now(timezone.utc)
+
+            for agent in agents_list:
+                num_tasks = random.randint(1, 3)
+                for _ in range(num_tasks):
+                    task_name, base_desc, min_dur, max_dur, min_tok, max_tok = random.choice(task_types)
+                    status = "Success" if random.random() < 0.95 else "Failed"
+                    duration = random.randint(min_dur, max_dur)
+                    tokens = random.randint(min_tok, max_tok)
+
+                    details = get_model_details(agent.get('model'), agent.get('platform'))
+                    in_tok = int(tokens * 0.75)
+                    out_tok = int(tokens * 0.25)
+                    cost = round((in_tok * details["input_rate"]) + (out_tok * details["output_rate"]), 5)
+
+                    desc = f"Completed during run-all cycle: {base_desc}" if status == "Success" else f"Failed during run-all cycle: {base_desc}"
+                    task_id = f"TSK-{uuid.uuid4().hex[:8].upper()}"
+
+                    # Insert task log
+                    cursor.execute('''
+                        INSERT INTO tasks (
+                            id, agent_id, agent_name, timestamp, status, duration_ms, cost, tokens, task_type, description,
+                            model, input_tokens, output_tokens
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (task_id, agent.get('id'), agent.get('name'), now.isoformat(), status, duration, cost, tokens, task_name, desc,
+                          details["model"], in_tok, out_tok))
+
+                    # Update agent execution metrics
+                    cursor.execute('''
+                        UPDATE agents
+                        SET tasksExecuted = tasksExecuted + 1,
+                            tokenUsage = tokenUsage + ?,
+                            monthlyCost = monthlyCost + ?
+                        WHERE id = ?
+                    ''', (tokens, cost, agent.get('id')))
+
+            conn.commit()
+
+            # Mirror updated agents to agents.json
+            cursor.execute("SELECT * FROM agents")
+            rows = cursor.fetchall()
+            updated_agents = []
+            for r in rows:
+                updated_agents.append({
+                    'id': r['id'],
+                    'name': r['name'],
+                    'platform': r['platform'],
+                    'department': r['department'],
+                    'owner': r['owner'],
+                    'status': r['status'],
+                    'environment': r['environment'],
+                    'purpose': r['purpose'],
+                    'endpoint': r['endpoint'],
+                    'piiAccess': bool(r['piiAccess']),
+                    'financialAccess': bool(r['financialAccess']),
+                    'riskScore': r['riskScore'],
+                    'certificationStatus': r['certificationStatus'],
+                    'region': r['region'],
+                    'monthlyCost': r['monthlyCost'],
+                    'tasksExecuted': r['tasksExecuted'],
+                    'successRate': r['successRate'],
+                    'availability': r['availability'],
+                    'avgLatency': r['avgLatency'],
+                    'tokenUsage': r['tokenUsage'],
+                    'model': r['model'],
+                    'criticality': r['criticality'],
+                    'onboardedAt': r['onboardedAt'],
+                    'lastSeen': r['lastSeen']
+                })
+            conn.close()
+
         with open(AGENTS_FILE, 'w') as f:
             json.dump({'agents': updated_agents, 'updated': now.isoformat()}, f, indent=2)
-            
+
         print("[DB] Mirror sync to agents.json complete.")
     except Exception as e:
         print("[DB] Error logging run-all tasks:", e)
@@ -693,7 +734,7 @@ _event_counter = 0
 def _load_agents():
     """Load agents from SQLite database."""
     try:
-        conn = sqlite3.connect(DB_FILE)
+        conn = _db_connect()
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM agents")
@@ -736,31 +777,39 @@ def _load_agents():
 def _save_agents(agents):
     """Save agents to SQLite database and mirror to agents.json."""
     try:
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM agents")
-        for a in agents:
-            cursor.execute('''
-                INSERT INTO agents (
-                    id, name, platform, department, owner, status, environment, purpose,
-                    endpoint, piiAccess, financialAccess, riskScore, certificationStatus,
-                    region, monthlyCost, tasksExecuted, successRate, availability,
-                    avgLatency, tokenUsage, model, criticality, onboardedAt, lastSeen
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                a.get('id'), a.get('name'), a.get('platform'), a.get('department'), a.get('owner'),
-                a.get('status', 'Active'), a.get('environment'), a.get('purpose'), a.get('endpoint'),
-                1 if a.get('piiAccess') else 0, 1 if a.get('financialAccess') else 0,
-                a.get('riskScore', 0), a.get('certificationStatus'), a.get('region'),
-                a.get('monthlyCost', 0.0), a.get('tasksExecuted', 0), a.get('successRate'),
-                a.get('availability'), a.get('avgLatency', 0.0), a.get('tokenUsage', 0),
-                a.get('model'), a.get('criticality'), a.get('onboardedAt'), a.get('lastSeen')
-            ))
-        conn.commit()
-        conn.close()
+        with _DB_WRITE_LOCK:
+            conn = _db_connect()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM agents")
+            for a in agents:
+                # INSERT OR REPLACE (not plain INSERT): the DELETE above
+                # already clears every row on every call, but a duplicate
+                # id within `agents` itself — e.g. a stale in-memory copy
+                # merged with a freshly-onboarded one — used to raise
+                # "UNIQUE constraint failed: agents.id" and abort the whole
+                # save. REPLACE makes a duplicate id a harmless overwrite
+                # instead of a crash.
+                cursor.execute('''
+                    INSERT OR REPLACE INTO agents (
+                        id, name, platform, department, owner, status, environment, purpose,
+                        endpoint, piiAccess, financialAccess, riskScore, certificationStatus,
+                        region, monthlyCost, tasksExecuted, successRate, availability,
+                        avgLatency, tokenUsage, model, criticality, onboardedAt, lastSeen
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    a.get('id'), a.get('name'), a.get('platform'), a.get('department'), a.get('owner'),
+                    a.get('status', 'Active'), a.get('environment'), a.get('purpose'), a.get('endpoint'),
+                    1 if a.get('piiAccess') else 0, 1 if a.get('financialAccess') else 0,
+                    a.get('riskScore', 0), a.get('certificationStatus'), a.get('region'),
+                    a.get('monthlyCost', 0.0), a.get('tasksExecuted', 0), a.get('successRate'),
+                    a.get('availability'), a.get('avgLatency', 0.0), a.get('tokenUsage', 0),
+                    a.get('model'), a.get('criticality'), a.get('onboardedAt'), a.get('lastSeen')
+                ))
+            conn.commit()
+            conn.close()
     except Exception as e:
         print("[DB] Error saving agents to SQLite:", e)
-        
+
     with open(AGENTS_FILE, 'w') as f:
         json.dump({'agents': agents, 'updated': datetime.now(timezone.utc).isoformat()}, f, indent=2)
 
@@ -772,100 +821,101 @@ def _record_kpi_history():
         if active_count == 0:
             return
             
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT COUNT(*) FROM deboarded_agents")
-        deboarded_count = cursor.fetchone()[0]
-        
-        cursor.execute("SELECT SUM(tasksExecuted), SUM(monthlyCost) FROM agents")
-        active_tasks, active_spend = cursor.fetchone()
-        active_tasks = active_tasks or 0
-        active_spend = active_spend or 0.0
-        
-        cursor.execute("SELECT SUM(tasksExecuted), SUM(monthlyCost) FROM deboarded_agents")
-        deboarded_tasks, deboarded_spend = cursor.fetchone()
-        deboarded_tasks = deboarded_tasks or 0
-        deboarded_spend = deboarded_spend or 0.0
-        
-        cumulative_tasks = active_tasks + deboarded_tasks
-        cumulative_spend = active_spend + deboarded_spend
-        
-        cumulative_roi = 0.0
-        if cumulative_spend > 0:
-            cumulative_roi = round((cumulative_tasks * 0.1) / cumulative_spend * 100, 1)
-            
-        # Get active risk score averages
-        cursor.execute("SELECT AVG(riskScore) FROM agents")
-        avg_risk = cursor.fetchone()[0] or 0.0
+        with _DB_WRITE_LOCK:
+            conn = _db_connect()
+            cursor = conn.cursor()
 
-        # Get high risk count
-        cursor.execute("SELECT COUNT(*) FROM agents WHERE riskScore >= 60")
-        high_risk_count = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM deboarded_agents")
+            deboarded_count = cursor.fetchone()[0]
 
-        # Get critical incidents (matches js/data.js's incidents threshold)
-        cursor.execute("SELECT COUNT(*) FROM agents WHERE riskScore >= 80")
-        critical_incidents = cursor.fetchone()[0]
+            cursor.execute("SELECT SUM(tasksExecuted), SUM(monthlyCost) FROM agents")
+            active_tasks, active_spend = cursor.fetchone()
+            active_tasks = active_tasks or 0
+            active_spend = active_spend or 0.0
 
-        # Get PII exposure count
-        cursor.execute("SELECT COUNT(*) FROM agents WHERE piiAccess = 1")
-        pii_exposure = cursor.fetchone()[0]
+            cursor.execute("SELECT SUM(tasksExecuted), SUM(monthlyCost) FROM deboarded_agents")
+            deboarded_tasks, deboarded_spend = cursor.fetchone()
+            deboarded_tasks = deboarded_tasks or 0
+            deboarded_spend = deboarded_spend or 0.0
 
-        # Get financial access count, for the same violation-event definition
-        # js/data.js's computeViolations() uses (PII + financial-access +
-        # risk>=60 flags, one violation per triggered condition per agent).
-        cursor.execute("SELECT COUNT(*) FROM agents WHERE financialAccess = 1")
-        financial_access_count = cursor.fetchone()[0]
-        policy_violations = pii_exposure + financial_access_count + high_risk_count
+            cumulative_tasks = active_tasks + deboarded_tasks
+            cumulative_spend = active_spend + deboarded_spend
 
-        # Real average availability, not a hardcoded 99.9 — availability is
-        # stored as text (e.g. "99.4"), so cast before averaging.
-        cursor.execute("SELECT AVG(CAST(availability AS REAL)) FROM agents WHERE availability IS NOT NULL AND availability != ''")
-        avg_reliability_row = cursor.fetchone()[0]
-        avg_reliability = round(avg_reliability_row, 1) if avg_reliability_row is not None else 0.0
+            cumulative_roi = 0.0
+            if cumulative_spend > 0:
+                cumulative_roi = round((cumulative_tasks * 0.1) / cumulative_spend * 100, 1)
 
-        # Get monthly spend
-        monthly_spend = active_spend
+            # Get active risk score averages
+            cursor.execute("SELECT AVG(riskScore) FROM agents")
+            avg_risk = cursor.fetchone()[0] or 0.0
 
-        # Budget efficiency — same formula as cumulative_roi above, capped at
-        # 100 to match js/data.js's budgetEfficiency (a ratio, not a return).
-        budget_efficiency = min(100.0, cumulative_roi) if cumulative_spend > 0 else 0.0
+            # Get high risk count
+            cursor.execute("SELECT COUNT(*) FROM agents WHERE riskScore >= 60")
+            high_risk_count = cursor.fetchone()[0]
 
-        # NOTE: there is no server-side equivalent yet of js/data.js's
-        # compliance-framework scoring (that logic lives client-side and
-        # depends on LLM results this endpoint doesn't have access to), so
-        # compliance_score is recorded as unassessed (-1) rather than a
-        # fabricated 100.0 — a consumer of this history table should treat
-        # -1 as "not assessed", the same convention computeKPIs() uses.
-        compliance_score = -1.0
+            # Get critical incidents (matches js/data.js's incidents threshold)
+            cursor.execute("SELECT COUNT(*) FROM agents WHERE riskScore >= 80")
+            critical_incidents = cursor.fetchone()[0]
 
-        # Insert history record
-        cursor.execute('''
-            INSERT INTO kpi_history (
-                timestamp, total_agents, deboarded_count, compliance_score, avg_risk_score,
-                avg_reliability, monthly_spend, workforce_roi, high_risk_agents,
-                policy_violations, pii_exposure, critical_incidents, budget_efficiency,
-                cost_per_agent, cost_per_task
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            datetime.now(timezone.utc).isoformat(),
-            active_count,
-            deboarded_count,
-            compliance_score,
-            avg_risk,
-            avg_reliability,
-            monthly_spend,
-            cumulative_roi,
-            high_risk_count,
-            policy_violations,
-            pii_exposure,
-            critical_incidents,
-            budget_efficiency,
-            round(monthly_spend / active_count, 2) if active_count > 0 else 0.0,
-            round(monthly_spend / active_tasks, 4) if active_tasks > 0 else 0.0
-        ))
-        conn.commit()
-        conn.close()
+            # Get PII exposure count
+            cursor.execute("SELECT COUNT(*) FROM agents WHERE piiAccess = 1")
+            pii_exposure = cursor.fetchone()[0]
+
+            # Get financial access count, for the same violation-event definition
+            # js/data.js's computeViolations() uses (PII + financial-access +
+            # risk>=60 flags, one violation per triggered condition per agent).
+            cursor.execute("SELECT COUNT(*) FROM agents WHERE financialAccess = 1")
+            financial_access_count = cursor.fetchone()[0]
+            policy_violations = pii_exposure + financial_access_count + high_risk_count
+
+            # Real average availability, not a hardcoded 99.9 — availability is
+            # stored as text (e.g. "99.4"), so cast before averaging.
+            cursor.execute("SELECT AVG(CAST(availability AS REAL)) FROM agents WHERE availability IS NOT NULL AND availability != ''")
+            avg_reliability_row = cursor.fetchone()[0]
+            avg_reliability = round(avg_reliability_row, 1) if avg_reliability_row is not None else 0.0
+
+            # Get monthly spend
+            monthly_spend = active_spend
+
+            # Budget efficiency — same formula as cumulative_roi above, capped at
+            # 100 to match js/data.js's budgetEfficiency (a ratio, not a return).
+            budget_efficiency = min(100.0, cumulative_roi) if cumulative_spend > 0 else 0.0
+
+            # NOTE: there is no server-side equivalent yet of js/data.js's
+            # compliance-framework scoring (that logic lives client-side and
+            # depends on LLM results this endpoint doesn't have access to), so
+            # compliance_score is recorded as unassessed (-1) rather than a
+            # fabricated 100.0 — a consumer of this history table should treat
+            # -1 as "not assessed", the same convention computeKPIs() uses.
+            compliance_score = -1.0
+
+            # Insert history record
+            cursor.execute('''
+                INSERT INTO kpi_history (
+                    timestamp, total_agents, deboarded_count, compliance_score, avg_risk_score,
+                    avg_reliability, monthly_spend, workforce_roi, high_risk_agents,
+                    policy_violations, pii_exposure, critical_incidents, budget_efficiency,
+                    cost_per_agent, cost_per_task
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                datetime.now(timezone.utc).isoformat(),
+                active_count,
+                deboarded_count,
+                compliance_score,
+                avg_risk,
+                avg_reliability,
+                monthly_spend,
+                cumulative_roi,
+                high_risk_count,
+                policy_violations,
+                pii_exposure,
+                critical_incidents,
+                budget_efficiency,
+                round(monthly_spend / active_count, 2) if active_count > 0 else 0.0,
+                round(monthly_spend / active_tasks, 4) if active_tasks > 0 else 0.0
+            ))
+            conn.commit()
+            conn.close()
         print("[DB] Logged current KPI state to kpi_history table.")
     except Exception as e:
         print("[DB] Error recording KPI history:", e)
@@ -1222,7 +1272,7 @@ class AETHERHandler(http.server.SimpleHTTPRequestHandler):
             
         if path == '/api/db-stats':
             try:
-                conn = sqlite3.connect(DB_FILE)
+                conn = _db_connect()
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
                 
@@ -1290,7 +1340,7 @@ class AETHERHandler(http.server.SimpleHTTPRequestHandler):
                 limit = 100
             
             try:
-                conn = sqlite3.connect(DB_FILE)
+                conn = _db_connect()
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
                 
@@ -1352,7 +1402,7 @@ class AETHERHandler(http.server.SimpleHTTPRequestHandler):
             
         if path == '/api/a2a-transactions':
             try:
-                conn = sqlite3.connect(DB_FILE)
+                conn = _db_connect()
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
                 cursor.execute("SELECT * FROM a2a_transactions ORDER BY timestamp DESC LIMIT 100")
@@ -1424,13 +1474,14 @@ class AETHERHandler(http.server.SimpleHTTPRequestHandler):
         
         if path == '/api/agents':
             try:
-                conn = sqlite3.connect(DB_FILE)
-                cursor = conn.cursor()
-                cursor.execute("DELETE FROM agents")
-                cursor.execute("DELETE FROM deboarded_agents")
-                cursor.execute("DELETE FROM kpi_history")
-                conn.commit()
-                conn.close()
+                with _DB_WRITE_LOCK:
+                    conn = _db_connect()
+                    cursor = conn.cursor()
+                    cursor.execute("DELETE FROM agents")
+                    cursor.execute("DELETE FROM deboarded_agents")
+                    cursor.execute("DELETE FROM kpi_history")
+                    conn.commit()
+                    conn.close()
             except Exception as e:
                 print("[DB] Error clearing SQLite on reset all:", e)
                 
@@ -1459,25 +1510,26 @@ class AETHERHandler(http.server.SimpleHTTPRequestHandler):
                     
             if agent_to_deboard:
                 try:
-                    conn = sqlite3.connect(DB_FILE)
-                    cursor = conn.cursor()
-                    cursor.execute('''
-                        INSERT OR REPLACE INTO deboarded_agents (
-                            id, name, platform, department, owner, deboardedAt, reason, monthlyCost, tasksExecuted
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (
-                        agent_to_deboard.get('id'),
-                        agent_to_deboard.get('name'),
-                        agent_to_deboard.get('platform'),
-                        agent_to_deboard.get('department'),
-                        agent_to_deboard.get('owner'),
-                        datetime.now(timezone.utc).isoformat(),
-                        "Decommissioned/Removed",
-                        agent_to_deboard.get('monthlyCost', 0.0),
-                        agent_to_deboard.get('tasksExecuted', 0)
-                    ))
-                    conn.commit()
-                    conn.close()
+                    with _DB_WRITE_LOCK:
+                        conn = _db_connect()
+                        cursor = conn.cursor()
+                        cursor.execute('''
+                            INSERT OR REPLACE INTO deboarded_agents (
+                                id, name, platform, department, owner, deboardedAt, reason, monthlyCost, tasksExecuted
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ''', (
+                            agent_to_deboard.get('id'),
+                            agent_to_deboard.get('name'),
+                            agent_to_deboard.get('platform'),
+                            agent_to_deboard.get('department'),
+                            agent_to_deboard.get('owner'),
+                            datetime.now(timezone.utc).isoformat(),
+                            "Decommissioned/Removed",
+                            agent_to_deboard.get('monthlyCost', 0.0),
+                            agent_to_deboard.get('tasksExecuted', 0)
+                        ))
+                        conn.commit()
+                        conn.close()
                     print(f"[DB] Archived agent {agent_id} ({agent_name}) to deboarded_agents.")
                 except Exception as e:
                     print("[DB] Error archiving deboarded agent to SQLite:", e)
@@ -1559,70 +1611,71 @@ class AETHERHandler(http.server.SimpleHTTPRequestHandler):
         status = 'Approved'
         decline_reason = ''
         compliance_check = 'Passed'
-        
-        conn = sqlite3.connect(DB_FILE)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        
-        # Load sender and receiver
-        cursor.execute("SELECT * FROM agents WHERE id=?", (sender_id,))
-        sender = cursor.fetchone()
-        cursor.execute("SELECT * FROM agents WHERE id=?", (receiver_id,))
-        receiver = cursor.fetchone()
-        
-        if not sender:
-            status = 'Declined'
-            decline_reason = 'Sender agent not found in AETHER registry'
-            compliance_check = 'Failed'
-        elif not receiver:
-            status = 'Declined'
-            decline_reason = 'Receiver agent not found in AETHER registry'
-            compliance_check = 'Failed'
-        else:
-            # Policy Checks
-            # Rule 1: Approved Model check on receiver
-            receiver_model = (receiver['model'] or "").lower()
-            if 'gpt-3.5' in receiver_model or 'davinci' in receiver_model or 'llama2' in receiver_model:
+
+        with _DB_WRITE_LOCK:
+            conn = _db_connect()
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            # Load sender and receiver
+            cursor.execute("SELECT * FROM agents WHERE id=?", (sender_id,))
+            sender = cursor.fetchone()
+            cursor.execute("SELECT * FROM agents WHERE id=?", (receiver_id,))
+            receiver = cursor.fetchone()
+
+            if not sender:
                 status = 'Declined'
-                decline_reason = 'GOV-MODEL-001 Violation: Receiver uses unapproved model version (' + receiver['model'] + ')'
+                decline_reason = 'Sender agent not found in AETHER registry'
                 compliance_check = 'Failed'
-            # Rule 2: Token Limit check
-            elif tokens_requested > 500000:
+            elif not receiver:
                 status = 'Declined'
-                decline_reason = 'GOV-COST-001 Violation: Requested tokens (' + str(tokens_requested) + ') exceed transaction threshold (500k)'
+                decline_reason = 'Receiver agent not found in AETHER registry'
                 compliance_check = 'Failed'
-            # Rule 3: High risk rating
-            elif receiver['riskScore'] > 80:
-                status = 'Declined'
-                decline_reason = 'GOV-RISK-001 Violation: Target agent risk rating (' + str(receiver['riskScore']) + ') is Critical'
-                compliance_check = 'Failed'
-                
-        cost = round((tokens_requested * 0.00002), 4) # $0.02 per 1k tokens
-        
-        # Insert transaction
-        cursor.execute('''
-            INSERT INTO a2a_transactions (id, timestamp, sender_id, receiver_id, tokens_requested, cost, status, decline_reason, compliance_check)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (tx_id, timestamp, sender_id, receiver_id, tokens_requested, cost, status, decline_reason, compliance_check))
-        
-        if status == 'Approved' and sender and receiver:
-            # Update agents tasks and token counters
-            cursor.execute("UPDATE agents SET tasksExecuted = tasksExecuted + 1, tokenUsage = tokenUsage + ? WHERE id=?", (tokens_requested, sender_id))
-            cursor.execute("UPDATE agents SET tasksExecuted = tasksExecuted + 1, tokenUsage = tokenUsage + ? WHERE id=?", (tokens_requested, receiver_id))
-            
-            # Log event
-            _log_event('A2ATransaction', 'AETHER Visa Clearing',
-                       f"Authorized: {sender['name']} -> {receiver['name']} | {tokens_requested} tokens (${cost})",
-                       'info')
-        else:
-            # Log failure event
-            _log_event('PolicyViolation', 'AETHER Visa Clearing',
-                       f"DECLINED: A2A transaction {sender_id} -> {receiver_id} blocked. Reason: {decline_reason}",
-                       'high')
-                       
-        conn.commit()
-        conn.close()
-        
+            else:
+                # Policy Checks
+                # Rule 1: Approved Model check on receiver
+                receiver_model = (receiver['model'] or "").lower()
+                if 'gpt-3.5' in receiver_model or 'davinci' in receiver_model or 'llama2' in receiver_model:
+                    status = 'Declined'
+                    decline_reason = 'GOV-MODEL-001 Violation: Receiver uses unapproved model version (' + receiver['model'] + ')'
+                    compliance_check = 'Failed'
+                # Rule 2: Token Limit check
+                elif tokens_requested > 500000:
+                    status = 'Declined'
+                    decline_reason = 'GOV-COST-001 Violation: Requested tokens (' + str(tokens_requested) + ') exceed transaction threshold (500k)'
+                    compliance_check = 'Failed'
+                # Rule 3: High risk rating
+                elif receiver['riskScore'] > 80:
+                    status = 'Declined'
+                    decline_reason = 'GOV-RISK-001 Violation: Target agent risk rating (' + str(receiver['riskScore']) + ') is Critical'
+                    compliance_check = 'Failed'
+
+            cost = round((tokens_requested * 0.00002), 4) # $0.02 per 1k tokens
+
+            # Insert transaction
+            cursor.execute('''
+                INSERT INTO a2a_transactions (id, timestamp, sender_id, receiver_id, tokens_requested, cost, status, decline_reason, compliance_check)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (tx_id, timestamp, sender_id, receiver_id, tokens_requested, cost, status, decline_reason, compliance_check))
+
+            if status == 'Approved' and sender and receiver:
+                # Update agents tasks and token counters
+                cursor.execute("UPDATE agents SET tasksExecuted = tasksExecuted + 1, tokenUsage = tokenUsage + ? WHERE id=?", (tokens_requested, sender_id))
+                cursor.execute("UPDATE agents SET tasksExecuted = tasksExecuted + 1, tokenUsage = tokenUsage + ? WHERE id=?", (tokens_requested, receiver_id))
+
+                # Log event
+                _log_event('A2ATransaction', 'AETHER Visa Clearing',
+                           f"Authorized: {sender['name']} -> {receiver['name']} | {tokens_requested} tokens (${cost})",
+                           'info')
+            else:
+                # Log failure event
+                _log_event('PolicyViolation', 'AETHER Visa Clearing',
+                           f"DECLINED: A2A transaction {sender_id} -> {receiver_id} blocked. Reason: {decline_reason}",
+                           'high')
+
+            conn.commit()
+            conn.close()
+
         self._json_response({
             'transaction_id': tx_id,
             'status': status,
@@ -1636,38 +1689,39 @@ class AETHERHandler(http.server.SimpleHTTPRequestHandler):
         """Dispute and refund an agent-to-agent transaction."""
         tx_id = body.get('transaction_id')
         
-        conn = sqlite3.connect(DB_FILE)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT * FROM a2a_transactions WHERE id=?", (tx_id,))
-        tx = cursor.fetchone()
-        
-        if not tx:
+        with _DB_WRITE_LOCK:
+            conn = _db_connect()
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            cursor.execute("SELECT * FROM a2a_transactions WHERE id=?", (tx_id,))
+            tx = cursor.fetchone()
+
+            if not tx:
+                conn.close()
+                self._json_response({'error': 'Transaction not found'}, 404)
+                return
+
+            if tx['status'] != 'Approved':
+                conn.close()
+                self._json_response({'error': 'Only Approved transactions can be disputed'}, 400)
+                return
+
+            # Update transaction status to Refunded/Disputed
+            cursor.execute("UPDATE a2a_transactions SET status='Refunded' WHERE id=?", (tx_id,))
+
+            # Deduct tasks and tokenUsage
+            tokens = tx['tokens_requested']
+            cursor.execute("UPDATE agents SET tasksExecuted = MAX(0, tasksExecuted - 1), tokenUsage = MAX(0, tokenUsage - ?) WHERE id=?", (tokens, tx['sender_id']))
+            cursor.execute("UPDATE agents SET tasksExecuted = MAX(0, tasksExecuted - 1), tokenUsage = MAX(0, tokenUsage - ?) WHERE id=?", (tokens, tx['receiver_id']))
+
+            _log_event('A2ATransactionRefund', 'AETHER Visa Clearing',
+                       f"REFUNDED: Transaction {tx_id} disputed. Reverted {tokens} tokens.",
+                       'warning')
+
+            conn.commit()
             conn.close()
-            self._json_response({'error': 'Transaction not found'}, 404)
-            return
-            
-        if tx['status'] != 'Approved':
-            conn.close()
-            self._json_response({'error': 'Only Approved transactions can be disputed'}, 400)
-            return
-            
-        # Update transaction status to Refunded/Disputed
-        cursor.execute("UPDATE a2a_transactions SET status='Refunded' WHERE id=?", (tx_id,))
-        
-        # Deduct tasks and tokenUsage
-        tokens = tx['tokens_requested']
-        cursor.execute("UPDATE agents SET tasksExecuted = MAX(0, tasksExecuted - 1), tokenUsage = MAX(0, tokenUsage - ?) WHERE id=?", (tokens, tx['sender_id']))
-        cursor.execute("UPDATE agents SET tasksExecuted = MAX(0, tasksExecuted - 1), tokenUsage = MAX(0, tokenUsage - ?) WHERE id=?", (tokens, tx['receiver_id']))
-        
-        _log_event('A2ATransactionRefund', 'AETHER Visa Clearing',
-                   f"REFUNDED: Transaction {tx_id} disputed. Reverted {tokens} tokens.",
-                   'warning')
-                   
-        conn.commit()
-        conn.close()
-        
+
         self._json_response({
             'message': 'Transaction refunded successfully',
             'transaction_id': tx_id,
