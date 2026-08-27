@@ -1566,19 +1566,25 @@
   .grid-4 { grid-template-columns: repeat(2, 1fr); }
 }
 
+@media (max-width: 640px) {
+  .sa-status-item { flex-basis: 140px; min-width: 140px; max-width: 100%; }
+}
+
 /* ═══════════════════════════════════════════════════════════
    SUPERVISORY AGENT & PLATFORM EXTENSION COMPONENTS
    ═══════════════════════════════════════════════════════════ */
 
-/* ═══ Supervisory Agent Status Strip ═══ */
+/* ═══ Supervisory Agent Status Strip ═══
+   Wraps onto multiple rows so every agent card stays visible —
+   previously this scrolled horizontally with the scrollbar hidden,
+   which clipped cards off the right edge with no visual cue that
+   more content existed. */
 .sa-status-strip {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   padding: 16px;
-  overflow-x: auto;
-  scrollbar-width: none;
 }
-.sa-status-strip::-webkit-scrollbar { display: none; }
 
 .sa-status-item {
   display: flex;
@@ -1588,7 +1594,9 @@
   background: var(--bg-card);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-md);
+  flex: 1 1 180px;
   min-width: 180px;
+  max-width: 240px;
   cursor: default;
   transition: all var(--transition-base);
 }

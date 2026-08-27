@@ -137,34 +137,45 @@ def _generate_fallback(agents_list, compliance_results, risk_results, governance
             })
 
     # ── Derive findings from compliance results ───────────────
-    if compliance_results and isinstance(compliance_results.get("violations"), list):
-        for viol in compliance_results["violations"]:
+    # compliance_agent.run() returns top-level "findings" (a flat list of
+    # {agent_id, agent_name, framework, finding} — see _collect_all_findings
+    # in compliance_agent.py), not "violations". That key never existed here,
+    # so this branch was always a no-op even when real findings were present.
+    if compliance_results and isinstance(compliance_results.get("findings"), list):
+        for cf in compliance_results["findings"]:
             finding_counter += 1
             fid = "FND-" + str(finding_counter).zfill(3)
-            framework = viol.get("framework", viol.get("policy_id", "Compliance"))
+            framework = cf.get("framework", "Compliance")
             findings.append({
                 "id": fid,
-                "severity": viol.get("severity", "Medium"),
+                "severity": cf.get("severity", "Medium"),
                 "framework": framework,
-                "description": "Compliance issue: " + viol.get("details", viol.get("description", "N/A")),
-                "recommendation": viol.get("recommendation", "Address the compliance gap."),
+                "description": "Compliance issue (" + cf.get("agent_name", "unknown agent") + "): " + str(cf.get("finding", "N/A")),
+                "recommendation": "Address the compliance gap.",
                 "status": "Open",
-                "due_date": _due_date(viol.get("severity", "Medium"))
+                "due_date": _due_date(cf.get("severity", "Medium"))
             })
 
     # ── Derive findings from risk results ─────────────────────
-    if risk_results and isinstance(risk_results.get("risks"), list):
-        for risk in risk_results["risks"]:
+    # risk_agent.run() returns top-level "agents" (per-agent risk_score/
+    # risk_level/reasoning — see _fallback_agent_result / the LLM path in
+    # risk_agent.py), not "risks". Only agents actually flagged High/Critical
+    # become audit findings.
+    if risk_results and isinstance(risk_results.get("agents"), list):
+        for ra in risk_results["agents"]:
+            level = ra.get("risk_level", "")
+            if level not in ("High", "Critical"):
+                continue
             finding_counter += 1
             fid = "FND-" + str(finding_counter).zfill(3)
             findings.append({
                 "id": fid,
-                "severity": risk.get("severity", "Medium"),
+                "severity": level,
                 "framework": "Risk Management",
-                "description": "Risk finding: " + risk.get("details", risk.get("description", "N/A")),
-                "recommendation": risk.get("recommendation", risk.get("mitigation", "Mitigate the identified risk.")),
+                "description": "Risk finding (" + ra.get("name", "unknown agent") + "): " + str(ra.get("reasoning", "Elevated risk score of " + str(ra.get("risk_score", "?")))),
+                "recommendation": "Mitigate the identified risk factors: " + ", ".join(ra.get("risk_factors", []) or ["review agent configuration"]),
                 "status": "Open",
-                "due_date": _due_date(risk.get("severity", "Medium"))
+                "due_date": _due_date(level)
             })
 
     # ── Default finding if nothing else was generated ─────────

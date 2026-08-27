@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>AETHER Platform — User Manual</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            themeVariables: {
+                background: '#0d1117',
+                primaryColor: '#3b82f6',
+                primaryTextColor: '#fff',
+                lineColor: '#30363d'
+            }
+        });
+    </script>
+    <style>
+        :root {
+            --bg-main: #060a13;
+            --bg-card: #0b132b;
+            --border-color: #1c2541;
+            --text-primary: #f8f9fa;
+            --text-secondary: #a5b4fc;
+            --color-primary: #3b82f6;
+            --color-success: #10b981;
+            --color-danger: #ef4444;
+            --color-warning: #f59e0b;
+        }
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            margin: 40px auto;
+            max-width: 900px;
+            padding: 0 20px;
+            font-size: 15px;
+        }
+        h1, h2, h3, h4 {
+            color: var(--text-primary);
+            font-weight: 700;
+            margin-top: 2em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            font-size: 2.5em;
+            border-bottom: 2px solid var(--color-primary);
+            padding-bottom: 8px;
+            margin-top: 0;
+            background: linear-gradient(135deg, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        h2 {
+            font-size: 1.8em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 6px;
+        }
+        p, li {
+            color: #d1d5db;
+        }
+        a {
+            color: var(--color-primary);
+            text-decoration: none;
+        }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+        pre {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: #e6edf3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+            font-size: 0.95em;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            background-color: rgba(59, 130, 246, 0.08);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 0.8em;
+            font-weight: 600;
+            border-radius: 9999px;
+            text-transform: uppercase;
+        }
+        .badge-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--color-success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--color-danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .badge-neutral {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        .alert {
+            border-left: 4px solid var(--color-primary);
+            background: rgba(59, 130, 246, 0.05);
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .alert-note {
+            border-left-color: var(--color-primary);
+            background: rgba(59, 130, 246, 0.05);
+        }
+        .alert-tip {
+            border-left-color: var(--color-success);
+            background: rgba(16, 185, 129, 0.05);
+        }
+        .alert-important {
+            border-left-color: var(--color-warning);
+            background: rgba(245, 158, 11, 0.05);
+        }
+        .alert-warning, .alert-caution {
+            border-left-color: var(--color-danger);
+            background: rgba(239, 68, 68, 0.05);
+        }
+        .alert-title {
+            font-weight: 700;
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .mermaid {
+            background: #0d1117;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #30363d;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+        }
+        @media print {
+            body {
+                margin: 20mm;
+                color: #000;
+                background: #fff;
+            }
+            h1, h2, h3, h4, p, li, td, th {
+                color: #000 !important;
+            }
+            pre, code {
+                background: #f6f8fa !important;
+                border-color: #d0d7de !important;
+                color: #24292f !important;
+            }
+            .mermaid {
+                background: #fff !important;
+                border: none !important;
+            }
+            .alert {
+                background: #f6f8fa !important;
+                border-left-color: #000 !important;
+            }
+            h1 {
+                background: none !important;
+                -webkit-text-fill-color: initial !important;
+                border-bottom-color: #000 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>AETHER Platform — C-Suite User Manual &amp; Governance Guide</h1>
+<p><em>Evaluating, Securing, and Clearing the Enterprise AI Workforce</em></p>
+<hr />
+<h2>Executive Summary: The Rise of the AI Workforce</h2>
+<p>As enterprises automate business processes, they are transitioning from software programs to <strong>autonomous AI agents</strong>. These agents write emails, access database servers, make customer support commitments, and execute financial transactions. </p>
+<p>However, this distributed workforce operates with minimal oversight:
+*   <strong>Shadow AI (CIO Threat)</strong>: Business departments deploy agents without IT's knowledge, creating infrastructure blindspots, security debt, and unmonitored endpoints.
+*   <strong>Data Leaks &amp; Non-compliance (CISO Threat)</strong>: AI workers handle Personally Identifiable Information (PII) like SSNs, medical records, and credit cards, exposing the company to massive compliance fines (GDPR, SOC 2, HIPAA, EU AI Act).
+*   <strong>Financial Leakage (CFO Threat)</strong>: AI models charge by "tokens" (units of text processed). Unmonitored agents can run into infinite loops, consuming thousands of dollars in minutes.</p>
+<p><strong>AETHER</strong> is the <strong>control plane</strong> and <strong>system of record</strong> for this new workforce. It acts as <strong>"Workday for AI Workers"</strong> (cataloging, onboarding, and offboarding agents) and <strong>"Visa for AI Agents"</strong> (clearing payments, enforcing real-time policies, and resolving transaction disputes).</p>
+<hr />
+<h2>1. The 11 Supervisory Agents: C-Suite Value Matrix</h2>
+<p>AETHER governs your company's AI workforce by employing 11 specialized "supervisory" AI agents. Below is the complete organizational structure and interaction architecture of these 11 agents.</p>
+<h3>The 11 Supervisory Agent Architecture</h3>
+<pre class="mermaid">flowchart TB
+    Orch["🎯 Orchestrator Agent<br/><i>Central Coordinator & Router</i>"]
+
+    subgraph Discovery_Identity["Topography & Credentials"]
+        Disc["🔍 Discovery Agent<br/><i>Scans Network Endpoints</i>"]
+        Id["🪪 Identity Agent<br/><i>Credential Rotation & Badges</i>"]
+    end
+
+    subgraph Security_Governance["Policy & Threat Control"]
+        Gov["🛡️ Governance Agent<br/><i>Enforces Corporate Policies</i>"]
+        Risk["⚠️ Risk Agent<br/><i>Computes Risk Scores (0-100)</i>"]
+        Sec["🔒 Security Agent<br/><i>Anomalies & Breach Isolation</i>"]
+    end
+
+    subgraph Cost_Operations["Efficiency & Reliability"]
+        Cost["💰 Cost Agent<br/><i>Monitors Budgets & Quotas</i>"]
+        Rel["💓 Reliability Agent<br/><i>Uptime & Uptime Monitoring</i>"]
+        Bench["📈 Benchmarking Agent<br/><i>LLM Unit Economics Advisor</i>"]
+    end
+
+    subgraph Audit_Compliance["Regulatory & Executive Reporting"]
+        Comp["✅ Compliance Agent<br/><i>SOC2/GDPR Controls Mapping</i>"]
+        Aud["🔎 Auditor Agent<br/><i>Compiles Audit Evidence</i>"]
+        Mgr["👔 Workforce Manager<br/><i>Publishes C-Suite Briefings</i>"]
+    end
+
+    %% Flow lines
+    Orch --> Disc & Id & Gov & Risk & Sec & Cost & Rel & Bench & Comp & Aud & Mgr
+    Disc -->|AgentDiscovered| Gov
+    Disc -->|AgentDiscovered| Risk
+    Risk -->|RiskScoreChanged| Gov
+    Risk -->|RiskScoreChanged| Sec
+    Sec -->|BreachDetected| Gov
+    Cost -->|ThresholdExceeded| Gov
+    Comp -->|ControlsVerified| Aud
+    Aud -->|AuditSummary| Mgr
+
+    style Orch fill:#1d4ed8,stroke:#3b82f6,stroke-width:2px,color:#fff
+    style Disc fill:#0b132b,stroke:#1c2541,color:#d1d5db
+    style Id fill:#0b132b,stroke:#1c2541,color:#d1d5db
+    style Gov fill:#0b132b,stroke:#1c2541,color:#d1d5db
+    style Risk fill:#0b132b,stroke:#1c2541,color:#d1d5db
+    style Sec fill:#0b132b,stroke:#1c2541,color:#d1d5db
+    style Cost fill:#0b132b,stroke:#1c2541,color:#d1d5db
+    style Rel fill:#0b132b,stroke:#1c2541,color:#d1d5db
+    style Bench fill:#0b132b,stroke:#1c2541,color:#d1d5db
+    style Comp fill:#0b132b,stroke:#1c2541,color:#d1d5db
+    style Aud fill:#0b132b,stroke:#1c2541,color:#d1d5db
+    style Mgr fill:#0b132b,stroke:#1c2541,color:#d1d5db</pre>
+
+<h3>🔍 Discovery Agent ("The Network Scanner")</h3>
+<ul>
+<li><strong>What it does</strong>: Scans your corporate network and external platforms (like Microsoft Copilot, Salesforce, AWS, or Databricks) to find AI agents.</li>
+<li><strong>CFO Value</strong>: Eliminates "Shadow AI" by ensuring every AI worker running on corporate budget is registered, cataloged, and accounted for.</li>
+<li><strong>CISO Value</strong>: Identifies unmonitored endpoints before they become entry points for data exfiltration or credential theft.</li>
+<li><strong>CIO Value</strong>: Maps the complete topography of your company's AI integrations, showing exactly where agents are hosted.</li>
+</ul>
+<h3>🪪 Identity Agent ("The Badging Office")</h3>
+<ul>
+<li><strong>What it does</strong>: Verifies who owns each agent, which department is financially responsible, and ensures access keys are rotated.</li>
+<li><strong>CFO Value</strong>: Prevents unauthorized API usage and ensures that any cost incurred by an agent is billed to the correct department's cost center.</li>
+<li><strong>CISO Value</strong>: Enforces access scopes (least-privilege model), ensuring a customer support agent cannot access raw HR databases.</li>
+<li><strong>CIO Value</strong>: Automates credentials management and rotation, minimizing IT security debt and orphan integrations.</li>
+</ul>
+<h3>🛡️ Governance Agent ("The Policy Enforcer")</h3>
+<ul>
+<li><strong>What it does</strong>: Evaluates agent behavior against corporate policies. If an agent tries to process a transaction without approval, this agent blocks it.</li>
+<li><strong>CFO Value</strong>: Acts as the first line of defense against unauthorized financial commitments, automatically stopping rogue expenditures.</li>
+<li><strong>CISO Value</strong>: Stops sensitive data (like SSNs or financial accounts) from crossing geographical borders or entering unencrypted servers.</li>
+<li><strong>CIO Value</strong>: Standardizes policy rules across Microsoft, Salesforce, Databricks, and custom agent runtimes.</li>
+</ul>
+<h3>✅ Compliance Agent ("The Regulatory Officer")</h3>
+<ul>
+<li><strong>What it does</strong>: Automatically checks if your agents comply with legal frameworks like SOC 2, GDPR, SOX, and HIPAA.</li>
+<li><strong>CFO Value</strong>: Reduces the cost of manual compliance audits by continuously generating audit-ready evidence.</li>
+<li><strong>CISO Value</strong>: Maps agent telemetry and data flows to regulatory control frameworks in real time, alerting on compliance gaps.</li>
+<li><strong>CIO Value</strong>: Streamlines IT compliance reporting, eliminating manual checklists for regulatory readiness.</li>
+</ul>
+<h3>⚠️ Risk Agent ("The Risk Assessor")</h3>
+<ul>
+<li><strong>What it does</strong>: Analyzes what data an agent accesses and calculates a dynamic "Risk Score" (0 to 100) for that agent.</li>
+<li><strong>CFO Value</strong>: Identifies high-risk liabilities before they lead to expensive data breaches or legal actions.</li>
+<li><strong>CISO Value</strong>: Classifies threat levels and data exposure, highlighting high-vulnerability targets for immediate remediation.</li>
+<li><strong>CIO Value</strong>: Provides a simple risk dashboard for cloud services, aiding system decommissioning planning.</li>
+</ul>
+<h3>💰 Cost Agent ("The Budget Controller")</h3>
+<ul>
+<li><strong>What it does</strong>: Monitors token usage, server costs, and license fees, comparing actual spend against department budgets.</li>
+<li><strong>CFO Value</strong>: Flags anomalies (e.g. an agent costing $500 in a day due to a loop) and suggests cost savings (e.g. switching to cheaper models).</li>
+<li><strong>CISO Value</strong>: Flags sudden spikes in data transaction volumes which might indicate a data scraping attack.</li>
+<li><strong>CIO Value</strong>: Helps in capacity planning by forecasting GPU and token resources required based on agent run habits.</li>
+</ul>
+<h3>💓 Reliability Agent ("The Quality Inspector")</h3>
+<ul>
+<li><strong>What it does</strong>: Monitors the speed (latency) and uptime of your AI workforce.</li>
+<li><strong>CFO Value</strong>: Ensures that the AI systems you invest in are actually online and productive, preserving employee and customer SLAs.</li>
+<li><strong>CISO Value</strong>: Monitors for service degradation caused by Denial-of-Service (DoS) attacks on LLM gateways.</li>
+<li><strong>CIO Value</strong>: Continuously tracks SLA uptime and API latencies, giving IT instant visibility into cloud provider outages.</li>
+</ul>
+<h3>📊 Observability Agent ("The Log Archivist")</h3>
+<ul>
+<li><strong>What it does</strong>: Ingests, parses, and connects activity logs and transaction traces across all systems.</li>
+<li><strong>CFO Value</strong>: Provides the telemetry foundation needed to trace the exact chain of events in case of an auditing discrepancy.</li>
+<li><strong>CISO Value</strong>: Provides incident response teams with detailed traces to investigate data misuse or prompt injections.</li>
+<li><strong>CIO Value</strong>: Consolidates separate logs from Microsoft, Salesforce, and custom Python servers into a single OpenTelemetry-compatible bus.</li>
+</ul>
+<h3>📈 Benchmarking Agent ("The Procurement Advisor")</h3>
+<ul>
+<li><strong>What it does</strong>: Compares the cost and efficiency of your agents against industry baselines and other departments.</li>
+<li><strong>CFO Value</strong>: Identifies underperforming AI assets, helping you allocate your technology budget to the highest-ROI agents.</li>
+<li><strong>CISO Value</strong>: Highlights configuration drift, identifying agents whose parameters deviate from the company's secure baselines.</li>
+<li><strong>CIO Value</strong>: Evaluates LLM model efficiency, helping IT determine whether proprietary models or open-source alternatives perform best.</li>
+</ul>
+<h3>🔎 Auditor Agent ("The Lead Auditor")</h3>
+<ul>
+<li><strong>What it does</strong>: Synthesizes findings from the compliance and governance runs, producing final remediation schedules.</li>
+<li><strong>CFO Value</strong>: Simplifies external financial and operational audits by acting as a single point of truth for AI workforce compliance.</li>
+<li><strong>CISO Value</strong>: Automates evidence collection for CISO compliance sign-offs and security certification renewals.</li>
+<li><strong>CIO Value</strong>: Replaces manual IT system audits with automated, weekly report generation.</li>
+</ul>
+<h3>👔 AI Workforce Manager ("The Chief AI Officer")</h3>
+<ul>
+<li><strong>What it does</strong>: Consolidates all data from the other 10 agents and generates executive, plain-English briefings.</li>
+<li><strong>CFO Value</strong>: Provides a high-level strategic overview of AI workforce ROI, budget usage, and compliance posture.</li>
+<li><strong>CISO Value</strong>: Provides an executive risk overview, detailing policy violations and remediation trends for board presentations.</li>
+<li><strong>CIO Value</strong>: Provides IT leaders with unified capacity, registry, and service availability summaries.</li>
+</ul>
+<hr />
+<h2>2. The Visa A2A Clearing Network: C-Suite Perspectives</h2>
+<p>Just as a consumer uses a Visa card to swipe at a merchant, AETHER establishes a <strong>Visa Clearing Network</strong> for <strong>Agent-to-Agent (A2A) Transactions</strong>. </p>
+<p>When one AI agent (e.g. a <em>Procurement Agent</em>) hires another AI agent (e.g. a <em>Data Analysis Agent</em>) to perform a task, they transact using <strong>compute credits and tokens</strong>. The AETHER Visa Network clears, authorizes, and audits these transactions in real time.</p>
+<pre class="mermaid">sequenceDiagram
+    autonumber
+    participant Buyer as Buyer Agent (e.g. Procurement)
+    participant Visa as AETHER Visa Gateway (Clearinghouse)
+    participant Passport as Cryptographic Passport
+    participant Seller as Seller Agent (e.g. Translator)
+
+    Buyer->>Visa: Request Service (Tokens, Seller ID)
+    Visa->>Passport: Scan Seller Passport & Credentials
+
+    alt Policy Violation Found (e.g. Legacy Model, High Risk)
+        Passport-->>Visa: Flag Violation (GOV-MODEL-001)
+        Visa-->>Buyer: DECLINE TRANSACTION (Reason)
+    else Policy Validation Passed
+        Passport-->>Visa: Passport Verified
+        Visa->>Visa: Calculate Cost ($0.02 / 1k Tokens)
+        Visa->>Seller: Clear Transaction & Authorize Task
+        Seller-->>Visa: Return Output Telemetry
+        Visa-->>Buyer: APPROVED TRANSACTION (Issue Tx Receipt)
+    end</pre>
+
+<h3>The Logic of "Disputes" and "Refunds": CFO, CISO &amp; CIO Perspectives</h3>
+<p>If a transaction is cleared, the LLM provider (like OpenAI or Microsoft) immediately processes the compute, meaning the tokens are physically consumed and billed. <strong>How does an AETHER Dispute and Refund help if the money is already spent?</strong></p>
+<p>The Dispute mechanism does not undo the physical cloud bill, but it protects the enterprise through <strong>four major governance functions</strong>:</p>
+<h4>1. Internal Quota Reinstatement (CFO Value)</h4>
+<p>If a Marketing agent hires a buggy translation agent that loops and wastes $100 of tokens, the Marketing department's budget shouldn't be penalized. 
+*   <strong>How it helps</strong>: Disputing the transaction voids the ledger entry and <strong>reinstates the tokens to the sender's internal quota</strong>, charging the waste to the faulty agent's department instead.</p>
+<h4>2. Risk Containment &amp; Credit Ratings (CISO Value)</h4>
+<p>Every dispute filed against an agent automatically lowers its <strong>Reliability Score</strong> and raises its <strong>Risk Score</strong>. 
+*   <strong>How it helps</strong>: If an agent starts failing consistently, its "Credit Score" drops. Once it falls below a specific threshold, the Governance Agent dynamically <strong>declines all future authorizations</strong> for that agent, preventing further budget drain.</p>
+<h4>3. Automated SLA Claim Evidence (CIO Value)</h4>
+<p>Large enterprises operate under Service Level Agreements (SLAs) with LLM providers (Microsoft, Amazon, etc.).
+*   <strong>How it helps</strong>: The transaction ledger serves as cryptographic proof of failed runs (e.g., model returned invalid formats or gibberish). Your IT procurement team can submit these logs to OpenAI or Azure to claim <strong>billing credits or refunds</strong>.</p>
+<h4>4. Corporate Cost-Center Cross-Charging (CFO Value)</h4>
+<p>Just like credit card chargebacks, AETHER routes the billing liability.
+*   <strong>How it helps</strong>: The dispute formally redirects the cost from the <em>Buyer's cost center</em> to the <em>Seller's cost center</em> (the department that built the broken agent), ensuring financial accountability.</p>
+<hr />
+<h2>3. Executive Dashboards &amp; Drill-down Actions</h2>
+<p>AETHER displays information in <strong>4 distinct levels</strong> so you can transition from high-level summaries to individual system logs with a single click.</p>
+<pre><code>Level 1: Executive KPI Cards  ──►  Level 2: Department Ledgers  ──►  Level 3: Agent Log Feeds  ──►  Level 4: Raw Telemetry Tracer
+</code></pre>
+<h3>CFO Dashboard: Profitability &amp; Cost Control</h3>
+<p>Designed for financial officers to track technology spend, workforce efficiency, and ROI metrics.
+*   <strong>Level 1 (Executive Summary)</strong>: Displays macro stats like <em>Total AI spend</em>, <em>Average Cost per Agent</em>, and <em>Workforce ROI</em>. It highlights the <strong>Top Cost Optimization Opportunities</strong> (identifying where you can swap expensive models like GPT-4 for cheaper alternatives like Snowflake Cortex).
+*   <strong>Level 2 (Agent-wise Spend Ledger)</strong>: A complete table showing monthly costs and task volumes for all agents. A green "Potential Savings" column highlights where budget can be recovered.
+*   <strong>Level 3 (Transaction List)</strong>: Displays every task executed by an agent, detailing duration, token counts, and cost per run. It shows a green recommendation banner explaining <em>how</em> and <em>why</em> a specific task should be migrated to a lower cost tier.
+*   <strong>Level 4 (Cost Breakdown)</strong>: Shows the input vs. output token ratio, model pricing rates, and features a <strong>Raw LLM Payload Tracer</strong> that displays the exact prompt sent and the completion received.</p>
+<h3>CISO Dashboard: Security &amp; Guardrails</h3>
+<p>Designed for security officers to monitor data privacy, access scopes, and regulatory posture.
+*   <strong>Level 1 (Security Overview)</strong>: Displays overall compliance scores, open security findings, and policy violations.
+*   <strong>Level 2 (Compliance Check Outcomes)</strong>: Maps agent operations directly to standard controls (SOC 2, GDPR, HIPAA, ISO 27001).
+*   <strong>Level 3 (PII Exposure Logs)</strong>: Lists instances where agents exposed sensitive data (e.g., a customer's phone number or credit card).
+*   <strong>Level 4 (Remediation Console)</strong>: Displays the raw JSON payload with highlighted PII. Features an <strong>"Enforce Data Masking Policy"</strong> button that scrubs the clear-text logs in real time, validating that security overrides work.</p>
+<h3>CIO Dashboard: Workforce Health &amp; Infrastructure</h3>
+<p>Designed for technology officers to monitor system uptime, integrations, and trace logs.
+*   <strong>Level 1 (Fleet Overview)</strong>: Tracks total agents, uptime SLA, and platform distributions (Microsoft, Snowflake, etc.).
+*   <strong>Level 2 (Fleet Performance)</strong>: Table of agent latency, availability, and active/inactive status.
+*   <strong>Level 3 (System Integrations)</strong>: Shows which external systems the agent is connected to (e.g., Salesforce CRM API).
+*   <strong>Level 4 (API Traces)</strong>: Detailed log of API request paths, latency, and status codes. Features a <strong>Network Payload Inspector</strong> to review headers.</p>
+<hr />
+<h2>4. Administrative Operations Guide</h2>
+<h3>How to Seed the System of Record</h3>
+<p>To clear previous sessions and seed the SQLite database with 30 days of realistic history (including A2A Visa transactions), open a terminal in the root directory and run:</p>
+<pre><code class="language-powershell">python seed_db.py
+</code></pre>
+<h3>How to Launch the Platform Server</h3>
+<p>The backend is written in standard Python (no external dependencies required). Start the server by running:</p>
+<pre><code class="language-powershell">python server.py
+</code></pre>
+<p>This launches the AETHER interface on <strong><code>http://localhost:3000</code></strong> (or the port defined in <code>.env</code>). The server uses multi-threaded request handling to prevent telemetry dashboards from lagging.</p>
+</body>
+</html>

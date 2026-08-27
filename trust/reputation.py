@@ -62,7 +62,8 @@ def compute(did: str) -> dict:
     if events == 0:
         return {'did': did, 'score': int(NEUTRAL), 'events': 0, 'completed': 0,
                 'refunded': 0, 'open_disputes': 0, 'disputes_lost': 0,
-                'volume_usd': 0.0, 'basis': 'no verified history — neutral'}
+                'volume_usd': 0.0, 'confidence': 0.0,
+                'basis': 'no verified history — neutral'}
 
     w_good = 0.0
     w_bad = 0.0

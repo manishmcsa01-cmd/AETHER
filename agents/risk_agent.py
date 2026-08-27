@@ -73,13 +73,21 @@ def _empty_result():
 
 
 def _fallback_agent_result(agent, error_msg):
-    """Build a fallback risk result for a single agent when LLM fails."""
+    """Build a fallback risk result for a single agent when LLM fails.
+
+    risk_score is set consistent with risk_level ("High" -> a score inside
+    the High band) rather than 0 — a 0 score paired with a "High" level was
+    internally contradictory: distribution/high-risk counts (keyed on
+    risk_level) treated the agent as High risk while the average risk score
+    (keyed on risk_score) pulled the fleet average toward 0, as if the same
+    agent were simultaneously the riskiest and the safest in the fleet.
+    """
     return {
         "id": agent.get("id", "unknown"),
         "name": agent.get("name", "unknown"),
-        "risk_score": 0,
+        "risk_score": 75,
         "risk_level": "High",
-        "reasoning": "Error during assessment: " + error_msg,
+        "reasoning": "Error during assessment: " + error_msg + " (unassessed — treated as High risk pending a successful re-scan)",
         "risk_factors": ["assessment_error"],
         "error": error_msg
     }

@@ -27,14 +27,28 @@ AETHER.pages.governance = {
       return 'badge badge-info';
     }
 
+    // Live per-policy violation counts, aggregated from the same violations
+    // list the Active Violations table below renders — the static
+    // `policies[i].violations`/`lastTriggered` fields are never mutated
+    // anywhere in the app, so reading them directly would show "0
+    // violations / Last: Never" even while real violations for that exact
+    // policy are listed right underneath.
+    var violationCountByPolicy = {}, lastTriggeredByPolicy = {};
+    violations.forEach(function (v) {
+      violationCountByPolicy[v.policy] = (violationCountByPolicy[v.policy] || 0) + 1;
+      if (!lastTriggeredByPolicy[v.policy]) lastTriggeredByPolicy[v.policy] = v.timestamp || 'Recently';
+    });
+
     var policyCards = policies.map(function (p) {
+      var liveCount = violationCountByPolicy[p.name] || 0;
+      var liveLast = lastTriggeredByPolicy[p.name] || 'Never';
       return '<div class="policy-rule">' +
         '<div class="policy-rule-condition"><code class="font-mono">' + p.condition + '</code></div>' +
         '<div class="policy-rule-arrow">→</div>' +
         '<div class="policy-rule-action"><span class="' + badgeClass(p.actionType) + '">' + p.action + '</span></div>' +
         '<div style="margin-left:auto;display:flex;align-items:center;gap:16px;">' +
-          '<span class="text-secondary" style="font-size:12px;cursor:pointer;text-decoration:underline;" onclick="window.location.hash=\'#rationale/policyViolations\'" title="Click to view policy violations rationale">' + p.violations + ' violations</span>' +
-          '<span class="text-tertiary" style="font-size:12px;cursor:pointer;" onclick="window.location.hash=\'#rationale/activePolicies\'" title="Click to view active policies rationale">Last: ' + p.lastTriggered + '</span>' +
+          '<span class="text-secondary" style="font-size:12px;cursor:pointer;text-decoration:underline;" onclick="window.location.hash=\'#rationale/policyViolations\'" title="Click to view policy violations rationale">' + liveCount + ' violation' + (liveCount === 1 ? '' : 's') + '</span>' +
+          '<span class="text-tertiary" style="font-size:12px;cursor:pointer;" onclick="window.location.hash=\'#rationale/activePolicies\'" title="Click to view active policies rationale">Last: ' + liveLast + '</span>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -125,7 +139,7 @@ AETHER.pages.governance = {
             '<div class="kpi-card-icon green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>' +
             '<span class="kpi-trend ' + (d.getTotalAgentCount() > 0 ? 'up' : 'neutral') + '">' + (d.getTotalAgentCount() > 0 ? '↑ live' : '—') + '</span>' +
           '</div>' +
-          '<div class="kpi-value tabular-nums">' + (d.getTotalAgentCount() > 0 ? (100 - (violations.length / Math.max(d.getTotalAgentCount(), 1) * 100)).toFixed(1) : '0') + '%</div>' +
+          '<div class="kpi-value tabular-nums">' + (d.getTotalAgentCount() > 0 ? k.policyAdherence.toFixed(1) : '0') + '%</div>' +
           '<div class="kpi-label">Policy Adherence</div>' +
         '</div>' +
 
@@ -209,6 +223,19 @@ AETHER.pages.compliance = {
     var compData = d.computeCompliance();
     var frameworks = compData.frameworks;
     var findings = compData.findings;
+    var kpis = d.computeKPIs();
+
+    /* Audit Readiness: share of individual controls actually verified
+       passing, across every framework. Deliberately NOT the same number
+       as Overall Score (which may be LLM-assessed and severity-weighted) —
+       readiness asks "how many controls have evidence", not "how good is
+       the program". */
+    var totalControls = 0, totalPassed = 0;
+    for (var fci = 0; fci < frameworks.length; fci++) {
+      totalControls += frameworks[fci].controls || 0;
+      totalPassed += frameworks[fci].passedControls || 0;
+    }
+    var auditReadiness = totalControls > 0 ? Math.round((totalPassed / totalControls) * 100) : 0;
 
     /* ── Framework Cards ──────────────────────────────────────── */
     var frameworkCards = frameworks.map(function (fw) {
@@ -230,7 +257,8 @@ AETHER.pages.compliance = {
     frameworks.forEach(function (fw) { fwColorMap[fw.name] = fw.color; });
 
     var findingRows = findings.map(function (f) {
-      var sevBadge = f.severity === 'High' ? 'badge badge-danger' :
+      var sevBadge = f.severity === 'Critical' ? 'badge badge-danger' :
+                     f.severity === 'High' ? 'badge badge-danger' :
                      f.severity === 'Medium' ? 'badge badge-warning' : 'badge badge-info';
       var statusBadge = f.status === 'Open' ? 'badge badge-danger' : 'badge badge-warning';
       var fwColor = fwColorMap[f.framework] || '#3b82f6';
@@ -267,7 +295,7 @@ AETHER.pages.compliance = {
             '<div class="kpi-card-icon green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>' +
             '<span class="kpi-trend ' + (d.getTotalAgentCount() > 0 ? 'up' : 'neutral') + '">' + (d.getTotalAgentCount() > 0 ? '↑ computed' : '—') + '</span>' +
           '</div>' +
-          '<div class="kpi-value tabular-nums">' + (d.getTotalAgentCount() > 0 ? Math.round(frameworks.reduce(function(s,f){return s+f.score;},0)/Math.max(frameworks.length,1)) : 0) + '%</div>' +
+          '<div class="kpi-value tabular-nums">' + (d.getTotalAgentCount() > 0 ? kpis.complianceScore : 0) + '%</div>' +
           '<div class="kpi-label">Overall Score</div>' +
         '</div>' +
 
@@ -289,12 +317,12 @@ AETHER.pages.compliance = {
           '<div class="kpi-label">Frameworks Monitored</div>' +
         '</div>' +
 
-        '<div class="kpi-card" onclick="window.location.hash=\'#rationale/complianceScore\'" style="cursor: pointer;" title="Click to view rationale">' +
+        '<div class="kpi-card" onclick="window.location.hash=\'#rationale/auditReadiness\'" style="cursor: pointer;" title="Click to view rationale">' +
           '<div class="kpi-card-header">' +
             '<div class="kpi-card-icon cyan"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>' +
             '<span class="kpi-trend ' + (d.getTotalAgentCount() > 0 ? 'up' : 'neutral') + '">' + (d.getTotalAgentCount() > 0 ? '↑ live' : '—') + '</span>' +
           '</div>' +
-          '<div class="kpi-value tabular-nums">' + (d.getTotalAgentCount() > 0 ? Math.round(frameworks.reduce(function(s,f){return s+f.score;},0)/Math.max(frameworks.length,1)) : 0) + '%</div>' +
+          '<div class="kpi-value tabular-nums">' + (d.getTotalAgentCount() > 0 ? auditReadiness : 0) + '%</div>' +
           '<div class="kpi-label">Audit Readiness</div>' +
         '</div>' +
 

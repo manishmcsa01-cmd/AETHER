@@ -75,7 +75,7 @@ AETHER.pages.rationale = {
         formulaText: 'Where \\(N_{\\text{registered}}\\) is registered agents and \\(N_{\\text{discovered}}\\) is discovered network endpoints.',
         description: 'Measures the percentage of network-detected AI agent endpoints that have been successfully registered under governance.',
         rationale: 'Shadow AI is a massive security risk. Discovery Coverage measures the visibility of your security team. A value of 100% means all detected LLM API calls and agent actions originate from verified, cataloged, and audited agents.',
-        calculation: 'Calculated by running a comparison between registered agent IP/DNS endpoints and the discovery network scanner logs.',
+        calculation: 'AETHER currently treats every registered agent as fully discovered — there is no live network endpoint scanner in this release, so coverage is a fixed 100% once any agent is onboarded (0% before then). A real discovery-vs-registration comparison is on the roadmap.',
         zeroState: 'No agents are registered yet, resulting in a default base rating. Onboard discovered agents to ensure complete governance coverage.',
         format: function(v) { return v + '%'; },
         renderTable: function() {
@@ -92,10 +92,10 @@ AETHER.pages.rationale = {
         icon: '🛡️',
         color: '#10b981',
         formula: '\\text{Compliance} = \\frac{1}{R}\\sum_{r=1}^{R} \\text{Score}_r',
-        formulaText: 'Where \\(\\text{Score}_r\\) represents compliance scores evaluated by the Compliance Agent across regulatory frameworks.',
+        formulaText: 'Where \\(\\text{Score}_r\\) is each individually-assessed agent\'s overall compliance score (\\(R\\) = number of assessed agents); AETHER averages per-agent scores, falling back to an average of per-framework scores only when per-agent results aren\'t available.',
         description: 'Adherence rate of all AI workers against SOC 2, ISO 27001, GDPR, SOX, and HIPAA control frameworks.',
         rationale: 'AI agents must abide by data privacy and security regulations. The compliance score indicates the audit readiness of your AI workforce. Higher scores reflect strict data access policies, low PII exposure, and proper model tracking.',
-        calculation: 'The supervisory Compliance Agent executes LLM-driven policy audits. It parses agent access metrics (like PII access flags, database scopes) to calculate conformity scores, which are then averaged.',
+        calculation: 'The supervisory Compliance Agent executes LLM-driven policy audits. It scores each agent individually against the 5 frameworks, then averages those per-agent scores across the fleet (falling back to a framework-level average, or a local rule-based estimate, if the LLM agent hasn\'t run).',
         zeroState: 'The Compliance Agent has not yet run, or no agents are registered to be assessed. Run a supervisory check to audit compliance controls.',
         format: function(v) { return kpis.complianceAssessed ? v + '%' : 'Not Assessed'; },
         renderTable: function() {
@@ -116,6 +116,35 @@ AETHER.pages.rationale = {
                  '<tbody>' + rows + '</tbody></table></div></div>';
         }
       },
+      auditReadiness: {
+        title: 'Audit Readiness',
+        icon: '📋',
+        color: '#06b6d4',
+        formula: '\\text{Readiness} = \\frac{\\sum_{f=1}^{F} \\text{Passed}_f}{\\sum_{f=1}^{F} \\text{Controls}_f} \\times 100\\%',
+        formulaText: 'Where \\(\\text{Passed}_f\\) and \\(\\text{Controls}_f\\) are the passing and total control counts for framework \\(f\\).',
+        description: 'The share of individual controls, across every monitored framework, that currently have verified passing evidence.',
+        rationale: 'Deliberately distinct from Overall Score: Score can be severity-weighted or LLM-assessed, while Readiness answers a narrower, auditor-facing question — "of every control we are supposed to have evidence for, how many actually do?" A framework can have a respectable score while still having unresolved individual controls.',
+        calculation: 'Sums passedControls and controls across all monitored frameworks, then divides.',
+        zeroState: 'No frameworks are monitored yet, so readiness cannot be computed.',
+        format: function(v) { return v + '%'; },
+        renderTable: function() {
+          var frameworks = (d.computeCompliance().frameworks) || [];
+          if (allAgents.length === 0 || frameworks.length === 0) return '';
+          var rows = '';
+          frameworks.forEach(function(f) {
+            var pct = f.controls > 0 ? Math.round((f.passedControls / f.controls) * 100) : 0;
+            rows += '<tr>' +
+                      '<td>' + f.name + '</td>' +
+                      '<td class="tabular-nums">' + f.passedControls + ' / ' + f.controls + '</td>' +
+                      '<td class="tabular-nums" style="font-weight:600;color:' + (pct >= 90 ? 'var(--color-success)' : pct >= 70 ? 'var(--color-warning)' : 'var(--color-danger)') + '">' + pct + '%</td>' +
+                    '</tr>';
+          });
+          return '<h3>Control Readiness By Framework</h3>' +
+                 '<div class="table-container"><div class="table-scroll"><table class="data-table">' +
+                 '<thead><tr><th>Framework</th><th>Passed / Total Controls</th><th>Readiness</th></tr></thead>' +
+                 '<tbody>' + rows + '</tbody></table></div></div>';
+        }
+      },
       avgReliability: {
         title: 'Average Reliability',
         icon: '⚡',
@@ -124,7 +153,7 @@ AETHER.pages.rationale = {
         formulaText: 'Where \\(\\text{Uptime}_i\\) is the health check availability percentage of agent \\(i\\).',
         description: 'Average uptime and availability percentage of all AI worker endpoints.',
         rationale: 'AI workers are core parts of modern workflows. This metric ensures that agent API endpoints are responsive. Frequent downtimes degrade productivity and disrupt automated business processes.',
-        calculation: 'Computed via active heartbeat checks executed by the Health Agent. Availability is calculated as successful HTTP responses divided by total probes.',
+        calculation: 'Computed by the Health Agent as a weighted score (starting at 100 and deducting for unreachable endpoints, elevated latency, HTTP error responses, and low reported success rates), then averaged across the fleet — not a raw successful-probes-over-total-probes ratio.',
         zeroState: 'No agents are registered to monitor, or all registered endpoints are unreachable. Configure active endpoints and run health checks.',
         format: function(v) { return v + '%'; },
         renderTable: function() {
@@ -195,11 +224,11 @@ AETHER.pages.rationale = {
         title: 'AI Workforce ROI',
         icon: '📈',
         color: '#6366f1',
-        formula: '\\text{ROI} = \\frac{\\text{Labor Savings} - \\text{Monthly Spend}}{\\text{Monthly Spend}} \\times 100\\%',
-        formulaText: 'Where \\(\\text{Labor Savings} = \\text{Total Tasks} \\times \\$0.10\\) (labor cost offset).',
+        formula: '\\text{ROI} = \\frac{\\text{Labor Savings}}{\\text{Monthly Spend}} \\times 100\\%',
+        formulaText: 'Where \\(\\text{Labor Savings} = \\text{Total Tasks} \\times \\$0.10\\) (labor cost offset). This is a savings-to-spend ratio, not a net-of-spend return.',
         description: 'Financial return on investment generated by the AI workforce compared to human operational costs.',
         rationale: 'Justifies AI investments by measuring efficiency. Every task executed by an AI worker offsets manual human tasks. We estimate a conservative labor savings of $0.10 per task executed.',
-        calculation: 'Calculated by multiplying the total number of tasks executed by all agents by $0.10, subtracting the monthly cost, and dividing by the monthly cost.',
+        calculation: 'Calculated by multiplying the total number of tasks executed by all agents by $0.10 and dividing by the monthly cost (no subtraction — it\'s a ratio of estimated labor savings to spend, so it can read well above 100% when spend is low relative to task volume).',
         zeroState: 'Workforce ROI is 0% because either no tasks have been executed yet, or monthly cost equals $0.00. Run tasks to calculate efficiency gains.',
         format: function(v) { return v + '%'; },
         renderTable: function() {
@@ -282,14 +311,21 @@ AETHER.pages.rationale = {
         format: function(v) { return v.toString(); },
         renderTable: function() {
           if (!d.policies || d.policies.length === 0) return '';
+          // Live per-policy counts (the static d.policies[i].violations field is
+          // never mutated — see js/pages/governance.js for the same fix applied
+          // to the Governance page's Policy Rules cards).
+          var liveViolations = d.computeViolations().violations;
+          var countByPolicy = {};
+          liveViolations.forEach(function (v) { countByPolicy[v.policy] = (countByPolicy[v.policy] || 0) + 1; });
           var rows = '';
           d.policies.forEach(function(p) {
+            var count = countByPolicy[p.name] || 0;
             rows += '<tr>' +
                       '<td><strong>' + p.id + '</strong></td>' +
                       '<td>' + p.name + '</td>' +
                       '<td><code>' + p.condition + '</code></td>' +
                       '<td><span class="badge badge-info">' + p.action + '</span></td>' +
-                      '<td class="tabular-nums" style="font-weight:600;color:' + (p.violations > 0 ? 'var(--color-danger)' : 'var(--color-success)') + '">' + p.violations + '</td>' +
+                      '<td class="tabular-nums" style="font-weight:600;color:' + (count > 0 ? 'var(--color-danger)' : 'var(--color-success)') + '">' + count + '</td>' +
                     '</tr>';
           });
           return '<h3>Active Governance Policies & Violations</h3>' +
@@ -323,7 +359,23 @@ AETHER.pages.rationale = {
         calculation: 'Aggregates task execution parameters from onboarded agent stats.',
         zeroState: 'No tasks have been executed yet by the registered agent fleet.',
         format: function(v) { return v + '%'; },
-        renderTable: function() { return kpiDefinitions.workforceROI.renderTable(); }
+        renderTable: function() {
+          if (allAgents.length === 0) return '';
+          var rows = '';
+          allAgents.forEach(function(ag) {
+            var sr = parseFloat(ag.successRate) || 0;
+            rows += '<tr>' +
+                      '<td><span class="table-agent-name">' + ag.name + '</span></td>' +
+                      '<td>' + ag.id + '</td>' +
+                      '<td class="tabular-nums" style="font-weight:600;color:' + (sr >= 95 ? 'var(--color-success)' : sr >= 85 ? 'var(--color-warning)' : 'var(--color-danger)') + '">' + sr.toFixed(1) + '%</td>' +
+                      '<td class="tabular-nums">' + (100 - sr).toFixed(1) + '%</td>' +
+                    '</tr>';
+          });
+          return '<h3>Per-Agent Task Success / Failure Rate</h3>' +
+                 '<div class="table-container"><div class="table-scroll"><table class="data-table">' +
+                 '<thead><tr><th>Agent Name</th><th>Agent ID</th><th>Success Rate</th><th>Failure Rate</th></tr></thead>' +
+                 '<tbody>' + rows + '</tbody></table></div></div>';
+        }
       },
       failureRate: {
         title: 'Task Failure Rate',
@@ -336,7 +388,7 @@ AETHER.pages.rationale = {
         calculation: 'Derived from the task success rate statistics.',
         zeroState: 'Zero failures detected! All tasks have completed successfully.',
         format: function(v) { return v + '%'; },
-        renderTable: function() { return kpiDefinitions.workforceROI.renderTable(); }
+        renderTable: function() { return kpiDefinitions.successRate.renderTable(); }
       },
       avgLatency: {
         title: 'Average Response Latency',
@@ -431,11 +483,11 @@ AETHER.pages.rationale = {
         format: function(v) { return v; },
         renderTable: function() {
           var rows = '';
-          var benchmarks = d.benchmarks || [];
+          var benchmarks = d.computeBenchmarks().filter(function (b) { return !b.notAssessed; });
           benchmarks.forEach(function(b) {
             var comp = b.company;
             var ind = b.industry;
-            var lowerIsBetter = { 'Cost Per Task': true, 'Mean Time to Resolve': true, 'Avg Response Time': true };
+            var lowerIsBetter = { 'Cost Per Task': true, 'Avg Risk Score': true, 'Avg Response Time': true };
             var isAbove = lowerIsBetter[b.metric] ? comp < ind : comp > ind;
             var status = isAbove ? '<span style="color:var(--color-success);font-weight:600;">Above</span>' : '<span style="color:var(--text-tertiary);">Below</span>';
             rows += '<tr>' +
@@ -554,14 +606,21 @@ AETHER.pages.rationale = {
         format: function(v) { return v + ' Policy Rules'; },
         renderTable: function() {
           if (!d.policies || d.policies.length === 0) return '';
+          // Live per-policy counts (the static d.policies[i].violations field is
+          // never mutated — see js/pages/governance.js for the same fix applied
+          // to the Governance page's Policy Rules cards).
+          var liveViolations = d.computeViolations().violations;
+          var countByPolicy = {};
+          liveViolations.forEach(function (v) { countByPolicy[v.policy] = (countByPolicy[v.policy] || 0) + 1; });
           var rows = '';
           d.policies.forEach(function(p) {
+            var count = countByPolicy[p.name] || 0;
             rows += '<tr>' +
                       '<td><strong>' + p.id + '</strong></td>' +
                       '<td>' + p.name + '</td>' +
                       '<td><code>' + p.condition + '</code></td>' +
                       '<td><span class="badge badge-info">' + p.action + '</span></td>' +
-                      '<td class="tabular-nums" style="font-weight:600;color:' + (p.violations > 0 ? 'var(--color-danger)' : 'var(--color-success)') + '">' + p.violations + '</td>' +
+                      '<td class="tabular-nums" style="font-weight:600;color:' + (count > 0 ? 'var(--color-danger)' : 'var(--color-success)') + '">' + count + '</td>' +
                     '</tr>';
           });
           return '<h3>Active Governance Policies & Violations</h3>' +
@@ -575,10 +634,10 @@ AETHER.pages.rationale = {
         icon: '⚡',
         color: '#8b5cf6',
         formula: 'A_{\\text{actions}} = \\sum_{k=1}^{T} \\text{Action}_k',
-        formulaText: 'Aggregates all automated enforcement actions logged in the current 24-hour cycle.',
+        formulaText: 'Aggregates every automated enforcement action logged for the current fleet — onboarding flags plus any policy-triggered blocks/alerts. This is a running fleet-wide total, not filtered to a rolling 24-hour window yet.',
         description: 'The count of system-enforced corrections, blocks, cost limits, or alerts executed by AETHER supervisors.',
         rationale: 'Automated remediation ensures round-the-clock policy adherence, shutting down violations before they scale into compliance breaches or financial losses.',
-        calculation: 'Scans the supervisory logs and counts all block, alert, and quarantine actions executed today.',
+        calculation: 'Scans the supervisory action log and counts all onboarding, block, alert, and quarantine actions recorded for currently-onboarded agents.',
         zeroState: 'Zero automated actions taken today. All systems operating within thresholds.',
         format: function(v) { return v + ' Action' + (v === 1 ? '' : 's'); },
         renderTable: function() {
@@ -722,7 +781,7 @@ AETHER.pages.rationale = {
         }
       },
       criticalIncidents: {
-        title: 'Critical Incidents (30d)',
+        title: 'Critical Incidents',
         icon: '🚨',
         color: '#ef4444',
         formula: 'I_{\\text{critical}} = \\sum_{i=1}^{N} [r_i \\ge 80]',
@@ -766,6 +825,35 @@ AETHER.pages.rationale = {
         format: function(v) { return v + '%'; },
         renderTable: function() { return kpiDefinitions.workforceROI.renderTable(); }
       },
+      agentUtilization: {
+        title: 'Agent Utilization',
+        icon: '⚙️',
+        color: '#3b82f6',
+        formula: '\\text{Utilization} = \\frac{|\\{i : \\text{Active}_i \\wedge \\text{Tasks}_i > 0\\}|}{N} \\times 100\\%',
+        formulaText: 'Share of all onboarded agents that are both Active and have executed at least one task.',
+        description: 'How much of the onboarded fleet is actually doing work, as opposed to sitting idle or unconfigured.',
+        rationale: 'A distinct measure from Budget Efficiency (a cost/labor-offset ratio). An agent can be cheap to run and still be idle; utilization flags agents that are Active in name only — the same agents Idle Agent Detection (GOV-IDLE-001) would flag individually.',
+        calculation: 'Counts agents with status "Active" and tasksExecuted > 0, divides by total onboarded agents.',
+        zeroState: 'Utilization is 0% because no onboarded agents have executed a task yet.',
+        format: function(v) { return v + '%'; },
+        renderTable: function() {
+          if (allAgents.length === 0) return '';
+          var rows = '';
+          allAgents.forEach(function(ag) {
+            var utilized = ag.status === 'Active' && (ag.tasksExecuted || 0) > 0;
+            rows += '<tr>' +
+                      '<td><span class="table-agent-name">' + ag.name + '</span></td>' +
+                      '<td>' + ag.status + '</td>' +
+                      '<td class="tabular-nums">' + d.formatNumber(ag.tasksExecuted || 0) + '</td>' +
+                      '<td>' + (utilized ? '<span class="badge badge-success">Utilized</span>' : '<span class="badge badge-warning">Idle</span>') + '</td>' +
+                    '</tr>';
+          });
+          return '<h3>Agent Utilization Detail</h3>' +
+                 '<div class="table-container"><div class="table-scroll"><table class="data-table">' +
+                 '<thead><tr><th>Agent Name</th><th>Status</th><th>Tasks Executed</th><th>Utilization</th></tr></thead>' +
+                 '<tbody>' + rows + '</tbody></table></div></div>';
+        }
+      },
       totalIdentities: {
         title: 'Total Agent Identities',
         icon: '🔑',
@@ -807,15 +895,16 @@ AETHER.pages.rationale = {
         zeroState: 'No active credentials. Register agent connections to generate credentials.',
         format: function(v) { return (v || 0) + ' Active'; },
         renderTable: function() {
-          if (allAgents.length === 0) return '';
+          var creds = d.computeIdentity().credentials.filter(function (c) { return c.status === 'Active'; });
+          if (creds.length === 0) return '';
           var rows = '';
-          allAgents.forEach(function(ag) {
+          creds.forEach(function(c) {
             rows += '<tr>' +
-                      '<td><span class="table-agent-name">' + ag.name + '</span></td>' +
-                      '<td>' + ag.id + '</td>' +
-                      '<td>' + (ag.endpoint ? 'mTLS Cert / OAuth' : 'API Key') + '</td>' +
+                      '<td><span class="table-agent-name">' + c.agent + '</span></td>' +
+                      '<td>' + c.agentId + '</td>' +
+                      '<td>' + c.type + '</td>' +
                       '<td><span class="badge badge-success">Active</span></td>' +
-                      '<td>' + (ag.piiAccess ? 'Read/Write (PII)' : 'Read-Only') + '</td>' +
+                      '<td>' + (c.scope === 'admin' ? 'Read/Write (Admin)' : 'Read/Write') + '</td>' +
                     '</tr>';
           });
           return '<h3>Credential Access Inventory</h3>' +
@@ -832,18 +921,18 @@ AETHER.pages.rationale = {
         formulaText: 'Where \\(Age_j\\) is the number of days since credential \\(j\\) was last rotated.',
         description: 'Number of credentials that have exceeded the 90-day rotation threshold.',
         rationale: 'Corporate security policies mandate rotating credentials every 90 days. Pending rotations flag stale keys that are vulnerable to credential theft.',
-        calculation: 'Compares the current date with the lastRotated timestamp of all active agent credentials.',
+        calculation: 'Compares the current date with the lastRotated (createdDate) timestamp of all agent credentials.',
         zeroState: 'All credentials are up to date and rotated within policy limits.',
         format: function(v) { return (v || 0) + ' Pending'; },
         renderTable: function() {
-          if (allAgents.length === 0) return '';
+          var creds = d.computeIdentity().credentials.filter(function (c) { return c.status === 'Rotation Due'; });
+          if (creds.length === 0) return '';
           var rows = '';
-          allAgents.forEach(function(ag) {
-            var lastRotated = ag.createdDate || '90+ days ago';
+          creds.forEach(function(c) {
             rows += '<tr>' +
-                      '<td><span class="table-agent-name">' + ag.name + '</span></td>' +
-                      '<td>' + ag.id + '</td>' +
-                      '<td>' + lastRotated + '</td>' +
+                      '<td><span class="table-agent-name">' + c.agent + '</span></td>' +
+                      '<td>' + c.agentId + '</td>' +
+                      '<td>' + c.lastRotated + '</td>' +
                       '<td><span class="badge badge-warning">Rotation Due</span></td>' +
                     '</tr>';
           });
@@ -861,17 +950,18 @@ AETHER.pages.rationale = {
         formulaText: 'Where \\(TimeLeft_j\\) represents the days remaining until credential \\(j\\) expires.',
         description: 'The number of certificates or secrets expiring within the next 30 days.',
         rationale: 'Unexpected credential expiration causes service outages. Tracking expiring credentials allows security administrators to plan automated rotations before services fail.',
-        calculation: 'Calculates the difference between expiry date and current date for all credentials, filtering for those under 30 days.',
+        calculation: 'Calculates the difference between the 90-day rotation due date and today for all credentials, filtering for those 30 days or less away.',
         zeroState: 'Zero credentials expiring within 30 days.',
         format: function(v) { return (v || 0) + ' Alert' + (v === 1 ? '' : 's'); },
         renderTable: function() {
-          if (allAgents.length === 0) return '';
+          var creds = d.computeIdentity().credentials.filter(function (c) { return c.status === 'Expiring'; });
+          if (creds.length === 0) return '';
           var rows = '';
-          allAgents.forEach(function(ag) {
+          creds.forEach(function(c) {
             rows += '<tr>' +
-                      '<td><span class="table-agent-name">' + ag.name + '</span></td>' +
-                      '<td>' + ag.id + '</td>' +
-                      '<td>' + (ag.createdDate ? 'in 28 days' : '30 days') + '</td>' +
+                      '<td><span class="table-agent-name">' + c.agent + '</span></td>' +
+                      '<td>' + c.agentId + '</td>' +
+                      '<td>' + c.expiresIn + '</td>' +
                       '<td><span class="badge badge-danger">Expiring</span></td>' +
                     '</tr>';
           });
@@ -889,15 +979,12 @@ AETHER.pages.rationale = {
         formulaText: 'Where \\(Event_k\\) is a credential revocation event logged within the current calendar month.',
         description: 'Number of credentials revoked due to offboarding, security rotation, or anomaly detection.',
         rationale: 'Revocation is a key incident response control. Tracking revocation counts helps verify that compromised agent keys are successfully invalidated.',
-        calculation: 'Queries the security auditing log for credential revocation events in the current month.',
+        calculation: 'Queries the security auditing log for credential revocation events in the current month. AETHER does not yet log individual credential-revocation events (only full agent onboard/deboard), so this is always 0 until that capability is added.',
         zeroState: 'No credentials revoked this month.',
         format: function(v) { return (v || 0) + ' Revoked'; },
         renderTable: function() {
-          var rows = '<tr><td>Credential Revocation Event</td><td>REV-049</td><td>Offboarding</td><td>Completed</td></tr>';
-          return '<h3>Recent Credential Revocation Logs</h3>' +
-                 '<div class="table-container"><div class="table-scroll"><table class="data-table">' +
-                 '<thead><tr><th>Action</th><th>ID</th><th>Reason</th><th>Status</th></tr></thead>' +
-                 '<tbody>' + rows + '</tbody></table></div></div>';
+          // No revocation event log exists yet — nothing real to show.
+          return '';
         }
       }
     };
@@ -927,9 +1014,9 @@ AETHER.pages.rationale = {
       rawValue = parseFloat(kpis.availability) > 99 ? 'Top 5%' : parseFloat(kpis.availability) > 98 ? 'Top 15%' : 'Top 30%';
     } else if (kpiId === 'metricsAboveBenchmark') {
       var above = 0;
-      var benchmarks = d.benchmarks || [];
+      var benchmarks = d.computeBenchmarks().filter(function (b) { return !b.notAssessed; });
       benchmarks.forEach(function(b) {
-        var lowerIsBetter = { 'Cost Per Task': true, 'Mean Time to Resolve': true, 'Avg Response Time': true };
+        var lowerIsBetter = { 'Cost Per Task': true, 'Avg Risk Score': true, 'Avg Response Time': true };
         var comp = parseFloat(b.company) || 0;
         var ind = parseFloat(b.industry) || 0;
         if (lowerIsBetter[b.metric]) {
@@ -938,10 +1025,10 @@ AETHER.pages.rationale = {
           if (comp > ind) above++;
         }
       });
-      rawValue = above + '/8';
+      rawValue = above + '/' + benchmarks.length;
     } else if (kpiId === 'biggestGap') {
       var maxGap = 0;
-      var benchmarks = d.benchmarks || [];
+      var benchmarks = d.computeBenchmarks().filter(function (b) { return !b.notAssessed; });
       benchmarks.forEach(function(b) {
         var comp = parseFloat(b.company) || 0;
         var ind = parseFloat(b.industry) || 0;
@@ -952,6 +1039,12 @@ AETHER.pages.rationale = {
     } else if (kpiId === 'costAdvantage') {
       var cpt = parseFloat(kpis.costPerTask) || 0;
       rawValue = cpt > 0 ? Math.round((1 - cpt / 0.18) * 100) + '% lower' : 'N/A';
+    } else if (kpiId === 'totalIdentities' || kpiId === 'activeCredentials' || kpiId === 'pendingRotation' ||
+               kpiId === 'expiringSoon' || kpiId === 'revokedThisMonth') {
+      // These live on computeIdentity().summary, not computeKPIs() — kpis[kpiId]
+      // would otherwise always be undefined and render as "0" regardless of the
+      // real identity/credential counts shown on the Identity & Access page.
+      rawValue = d.computeIdentity().summary[kpiId];
     }
     
     var val = def.format(rawValue);

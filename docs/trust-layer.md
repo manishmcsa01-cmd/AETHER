@@ -116,6 +116,28 @@ sender; a standing signed attestation defaults to release. An arbiter can
 override with an explicit outcome and notes. Outcomes move escrow, are
 ledgered, and permanently feed both parties' reputations.
 
+## 6. Portfolio metrics — the fleet-wide rollup
+
+`GET /api/trust/metrics` (`trust/metrics.py`) answers the question none of
+the per-record endpoints above can: *how is the trust layer doing, overall?*
+Every number is computed live from the same recorded tables the four
+pillars themselves write to — nothing here is estimated or cached.
+
+| Section | What it reports |
+|---|---|
+| `identities` | Total registered, split by kind, custodial vs. non-custodial key count |
+| `mandates` | Active/revoked, root vs. sub-delegated, total root spend cap issued |
+| `transactions` | Counts and USD volume by status, decline rate, and declines bucketed by which of the five clearing gates rejected them (`IDENTITY` / `DELEGATION` / `POLICY` / `ESCROW`) |
+| `escrow` | Currently-held USD across all accounts, total account balances |
+| `disputes` | Open vs. resolved, outcome split, average resolution time |
+| `reputation` | Average verified reputation across agents with settled history, count below the reputation floor |
+| `ledger` | Live tamper-evident integrity check (`store.ledger_verify()`) — re-verified on every call |
+
+The Trust Console (`trust.html`) renders this as a KPI strip at the top of
+the page and refreshes it automatically after every register/issue/fund/
+authorize/complete/dispute action, so the numbers are never more than one
+action stale.
+
 ---
 
 ## Configuration (`.env`)
@@ -132,7 +154,7 @@ ledgered, and permanently feed both parties' reputations.
 pip install -r requirements.txt      # cryptography (+ mcp for mcp_server.py)
 python server.py                     # trust API mounts automatically
 # open http://localhost:3000/trust.html  — interactive trust console
-python -m unittest tests.test_trust -v   # 22 tests
+python -m unittest tests.test_trust -v   # 24 tests
 ```
 
 ## Production hardening roadmap (not yet implemented)

@@ -572,18 +572,36 @@ AETHER.pages.benchmark = {
         '</div>';
     }
 
-    /* Build benchmarks from live computed KPIs */
-    var compVal = kpis.complianceAssessed ? parseFloat(kpis.complianceScore) : -1;
-    var benchmarks = [
-      { metric: 'Agent Reliability', company: parseFloat(kpis.availability) || 0, industry: 97.2, unit: '%' },
-      { metric: 'Agent Utilization', company: parseFloat(kpis.budgetEfficiency) || 0, industry: 72.0, unit: '%' },
-      { metric: 'Cost Per Task', company: parseFloat(kpis.costPerTask) || 0, industry: 0.18, unit: '$' },
-      { metric: 'Compliance Score', company: compVal, industry: 89.0, unit: '%', notAssessed: !kpis.complianceAssessed },
-      { metric: 'Avg Risk Score', company: kpis.riskAssessed ? kpis.avgRiskScore : -1, industry: 25.0, unit: '/100', notAssessed: !kpis.riskAssessed },
-      { metric: 'Discovery Coverage', company: parseFloat(kpis.discoveryCoverage) || 0, industry: 82.0, unit: '%' },
-      { metric: 'Policy Adherence', company: compVal, industry: 91.0, unit: '%', notAssessed: !kpis.complianceAssessed },
-      { metric: 'Avg Response Time', company: kpis.avgLatency || 0, industry: 285, unit: 'ms' }
-    ];
+    /* Build benchmarks from live computed KPIs — single source of truth
+       shared with init()'s radar chart and the rationale drill-downs. */
+    var benchmarks = d.computeBenchmarks();
+
+    /* ── Derived hero-card metrics (computed once, reused below so the
+       label always matches the number) ──────────────────────────── */
+    var lowerIsBetterMap = { 'Cost Per Task': true, 'Mean Time to Resolve': true, 'Avg Response Time': true, 'Avg Risk Score': true };
+    var assessedBenchmarks = benchmarks.filter(function (b) { return !b.notAssessed; });
+    var metricsAboveCount = 0;
+    for (var mai = 0; mai < assessedBenchmarks.length; mai++) {
+      var mab = assessedBenchmarks[mai];
+      if (lowerIsBetterMap[mab.metric] ? mab.company < mab.industry : mab.company > mab.industry) metricsAboveCount++;
+    }
+    var biggestGapMetric = 'N/A', biggestGapPct = 0, biggestGapFavorsUs = true;
+    for (var bgi = 0; bgi < assessedBenchmarks.length; bgi++) {
+      var bg = assessedBenchmarks[bgi];
+      var gapPct = Math.abs(((bg.company - bg.industry) / Math.max(bg.industry, 0.01)) * 100);
+      if (gapPct > biggestGapPct) {
+        biggestGapPct = gapPct;
+        biggestGapMetric = bg.metric;
+        biggestGapFavorsUs = lowerIsBetterMap[bg.metric] ? bg.company < bg.industry : bg.company > bg.industry;
+      }
+    }
+    // Cost Advantage: positive means our cost/task is BELOW the $0.18 industry benchmark (good);
+    // negative means we are above it. Both directions are rendered correctly below.
+    var costAdvantagePct = parseFloat(kpis.costPerTask) > 0 ? Math.round((1 - parseFloat(kpis.costPerTask) / 0.18) * 100) : null;
+    // Reliability gap vs the industry benchmark used in the "Agent Reliability" row above.
+    var reliabilityVal = parseFloat(kpis.availability) || 0;
+    var reliabilityIndustry = 97.2;
+    var reliabilityGapPts = reliabilityVal - reliabilityIndustry;
 
     /* ── KPIs ────────────────────────────────────── */
     var kpiHTML = '' +
@@ -599,25 +617,25 @@ AETHER.pages.benchmark = {
         '<div class="kpi-card animate-fade-in-up stagger-2" onclick="window.location.hash=\'#rationale/metricsAboveBenchmark\'" style="cursor: pointer;" title="Click to view rationale">' +
           '<div class="kpi-card-header">' +
             '<div class="kpi-card-icon blue"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 10l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 18a8 8 0 100-16 8 8 0 000 16z" stroke="currentColor" stroke-width="1.5"/></svg></div>' +
-            '<span class="kpi-trend up">↑ +1</span>' +
+            '<span class="kpi-trend ' + (metricsAboveCount >= assessedBenchmarks.length / 2 ? 'up' : 'down') + '">' + (metricsAboveCount >= assessedBenchmarks.length / 2 ? '↑' : '↓') + ' ' + metricsAboveCount + '/' + assessedBenchmarks.length + '</span>' +
           '</div>' +
-          '<div class="kpi-value tabular-nums">' + (function() { var above = 0; for (var bi = 0; bi < benchmarks.length; bi++) { var bm = benchmarks[bi]; var lib = { 'Cost Per Task': true, 'Mean Time to Resolve': true, 'Avg Response Time': true }; if (lib[bm.metric]) { if (bm.company < bm.industry) above++; } else { if (bm.company > bm.industry) above++; } } return above + '/' + benchmarks.length; })() + '</div>' +
+          '<div class="kpi-value tabular-nums">' + metricsAboveCount + '/' + assessedBenchmarks.length + '</div>' +
           '<div class="kpi-label">Metrics Above Benchmark</div>' +
         '</div>' +
         '<div class="kpi-card animate-fade-in-up stagger-3" onclick="window.location.hash=\'#rationale/biggestGap\'" style="cursor: pointer;" title="Click to view rationale">' +
           '<div class="kpi-card-header">' +
             '<div class="kpi-card-icon cyan"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 17l5-5m0 0l5 5m-5-5V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>' +
-            '<span class="kpi-trend up">↑</span>' +
+            '<span class="kpi-trend ' + (biggestGapFavorsUs ? 'up' : 'down') + '">' + (biggestGapFavorsUs ? '↑' : '↓') + '</span>' +
           '</div>' +
-          '<div class="kpi-value tabular-nums">' + (function() { var maxGap = 0; var maxMetric = ''; for (var bi = 0; bi < benchmarks.length; bi++) { var bm = benchmarks[bi]; var gap = Math.abs(((bm.company - bm.industry) / Math.max(bm.industry, 0.01)) * 100); if (gap > maxGap) { maxGap = gap; maxMetric = bm.metric; } } return '+' + maxGap.toFixed(1) + '%'; })() + '</div>' +
-          '<div class="kpi-label">Biggest Gap: Utilization</div>' +
+          '<div class="kpi-value tabular-nums">' + (biggestGapFavorsUs ? '+' : '-') + biggestGapPct.toFixed(1) + '%</div>' +
+          '<div class="kpi-label">Biggest Gap: ' + biggestGapMetric + '</div>' +
         '</div>' +
         '<div class="kpi-card animate-fade-in-up stagger-4" onclick="window.location.hash=\'#rationale/costAdvantage\'" style="cursor: pointer;" title="Click to view rationale">' +
           '<div class="kpi-card-header">' +
-            '<div class="kpi-card-icon green"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2v16M6 6h5.5a2.5 2.5 0 010 5H6m0 0h6.5a2.5 2.5 0 010 5H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>' +
-            '<span class="kpi-trend up">↑</span>' +
+            '<div class="kpi-card-icon ' + (costAdvantagePct === null ? 'green' : (costAdvantagePct >= 0 ? 'green' : 'red')) + '"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2v16M6 6h5.5a2.5 2.5 0 010 5H6m0 0h6.5a2.5 2.5 0 010 5H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>' +
+            '<span class="kpi-trend ' + (costAdvantagePct === null ? 'neutral' : (costAdvantagePct >= 0 ? 'up' : 'down')) + '">' + (costAdvantagePct === null ? '—' : (costAdvantagePct >= 0 ? '↑' : '↓')) + '</span>' +
           '</div>' +
-          '<div class="kpi-value tabular-nums">' + (parseFloat(kpis.costPerTask) > 0 ? Math.round((1 - parseFloat(kpis.costPerTask) / 0.18) * 100) + '% lower' : 'N/A') + '</div>' +
+          '<div class="kpi-value tabular-nums">' + (costAdvantagePct === null ? 'N/A' : (costAdvantagePct >= 0 ? costAdvantagePct + '% lower' : Math.abs(costAdvantagePct) + '% higher')) + '</div>' +
           '<div class="kpi-label">Cost Advantage</div>' +
         '</div>' +
       '</div>';
@@ -627,7 +645,7 @@ AETHER.pages.benchmark = {
     var benchRows = '';
     var hashMap = {
       'Agent Reliability': '#rationale/availability',
-      'Agent Utilization': '#rationale/budgetEfficiency',
+      'Agent Utilization': '#rationale/agentUtilization',
       'Cost Per Task': '#rationale/costPerTask',
       'Compliance Score': '#rationale/complianceScore',
       'Avg Risk Score': '#rationale/avgRiskScore',
@@ -720,24 +738,35 @@ AETHER.pages.benchmark = {
       '<div class="section-title animate-fade-in-up stagger-7">Key Recommendations</div>' +
       '<div class="flex-col gap-4 animate-fade-in-up stagger-7">' +
         '<div class="recommendation-card">' +
-          '<div class="recommendation-icon">🏆</div>' +
+          '<div class="recommendation-icon">' + (reliabilityGapPts >= 0 ? '🏆' : '⚠️') + '</div>' +
           '<div class="recommendation-content">' +
-            '<div class="recommendation-title">Maintain Reliability Lead</div>' +
-            '<div class="recommendation-desc">Your 99.4% reliability exceeds the industry average by 2.2 percentage points. Continue investing in monitoring and incident response to sustain this competitive advantage.</div>' +
+            '<div class="recommendation-title">' + (reliabilityGapPts >= 0 ? 'Maintain Reliability Lead' : 'Close Reliability Gap') + '</div>' +
+            '<div class="recommendation-desc">' + (reliabilityGapPts >= 0 ?
+              'Your ' + reliabilityVal.toFixed(1) + '% reliability exceeds the industry average by ' + reliabilityGapPts.toFixed(1) + ' percentage points. Continue investing in monitoring and incident response to sustain this competitive advantage.' :
+              'Your ' + reliabilityVal.toFixed(1) + '% reliability is ' + Math.abs(reliabilityGapPts).toFixed(1) + ' percentage points below the ' + reliabilityIndustry + '% industry average. Investigate recurring failures and invest in monitoring and incident response to close the gap.'
+            ) + '</div>' +
           '</div>' +
         '</div>' +
         '<div class="recommendation-card">' +
           '<div class="recommendation-icon">💰</div>' +
           '<div class="recommendation-content">' +
-            '<div class="recommendation-title">Expand Cost Advantage</div>' +
-            '<div class="recommendation-desc">Cost per task is 33% below industry average at $0.12 vs $0.18. Continue optimization strategies including token reduction and batch processing to widen the gap.</div>' +
+            '<div class="recommendation-title">' + (costAdvantagePct === null || costAdvantagePct >= 0 ? 'Expand Cost Advantage' : 'Close Cost Gap') + '</div>' +
+            '<div class="recommendation-desc">' + (costAdvantagePct === null ?
+              'No task volume recorded yet, so cost per task cannot be compared to the $0.18 industry average.' :
+              costAdvantagePct >= 0 ?
+              'Cost per task is ' + costAdvantagePct + '% below industry average at $' + parseFloat(kpis.costPerTask).toFixed(2) + ' vs $0.18. Continue optimization strategies including token reduction and batch processing to widen the gap.' :
+              'Cost per task is ' + Math.abs(costAdvantagePct) + '% above industry average at $' + parseFloat(kpis.costPerTask).toFixed(2) + ' vs $0.18. Investigate token usage and consider batch processing to close the gap.'
+            ) + '</div>' +
           '</div>' +
         '</div>' +
         '<div class="recommendation-card">' +
           '<div class="recommendation-icon">⚡</div>' +
           '<div class="recommendation-content">' +
-            '<div class="recommendation-title">Close Utilization Gap</div>' +
-            '<div class="recommendation-desc">Agent utilization at 87.5% is 15.5% above industry average of 72%. Consider workload balancing and capacity planning to maintain optimal throughput without burnout.</div>' +
+            '<div class="recommendation-title">' + (kpis.agentUtilization >= 72 ? 'Manage Utilization Headroom' : 'Close Utilization Gap') + '</div>' +
+            '<div class="recommendation-desc">' + (kpis.agentUtilization >= 72 ?
+              'Agent utilization at ' + kpis.agentUtilization + '% is ' + (kpis.agentUtilization - 72) + ' points above the industry average of 72%. Consider workload balancing and capacity planning to maintain optimal throughput without burnout.' :
+              'Agent utilization at ' + kpis.agentUtilization + '% is ' + (72 - kpis.agentUtilization) + ' points below the industry average of 72%. Investigate idle or underused agents and consider consolidating or retiring them.'
+            ) + '</div>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -765,21 +794,12 @@ AETHER.pages.benchmark = {
     var d = AETHER.data;
     if (d.getTotalAgentCount() === 0) return;
 
-    var kpis = d.computeKPIs();
-    /* Build benchmarks from live computed KPIs */
-    var benchmarks = [
-      { metric: 'Agent Reliability', company: parseFloat(kpis.availability) || 0, industry: 97.2, unit: '%' },
-      { metric: 'Agent Utilization', company: parseFloat(kpis.budgetEfficiency) || 0, industry: 72.0, unit: '%' },
-      { metric: 'Cost Per Task', company: parseFloat(kpis.costPerTask) || 0, industry: 0.18, unit: '$' },
-      { metric: 'Compliance Score', company: parseFloat(kpis.complianceScore) || 0, industry: 89.0, unit: '%' },
-      { metric: 'Mean Time to Resolve', company: kpis.criticalIncidents > 0 ? 4.2 : 0, industry: 8.5, unit: 'hrs' },
-      { metric: 'Discovery Coverage', company: parseFloat(kpis.discoveryCoverage) || 0, industry: 82.0, unit: '%' },
-      { metric: 'Policy Adherence', company: parseFloat(kpis.complianceScore) || 0, industry: 91.0, unit: '%' },
-      { metric: 'Avg Response Time', company: kpis.avgLatency || 0, industry: 285, unit: 'ms' }
-    ];
+    /* Build benchmarks from live computed KPIs — same source of truth as
+       render() above, so the radar chart never drifts from the table. */
+    var benchmarks = d.computeBenchmarks().filter(function (b) { return !b.notAssessed; });
 
     /* Normalize values to 0-100 scale for radar */
-    var lowerIsBetter = { 'Cost Per Task': true, 'Mean Time to Resolve': true, 'Avg Response Time': true };
+    var lowerIsBetter = { 'Cost Per Task': true, 'Avg Risk Score': true, 'Avg Response Time': true };
     var labels = [];
     var companyData = [];
     var industryData = [];
@@ -925,8 +945,8 @@ AETHER.pages.impact = {
         '<div class="chart-card">' +
           '<div class="chart-card-header">' +
             '<div>' +
-              '<div class="chart-card-title">Impact by Department</div>' +
-              '<div class="chart-card-subtitle">Total business value generated ($K)</div>' +
+              '<div class="chart-card-title">Spend by Department</div>' +
+              '<div class="chart-card-subtitle">Total AI workforce spend ($K)</div>' +
             '</div>' +
           '</div>' +
           '<div class="chart-card-body"><canvas id="chart-impact-dept" style="height:280px"></canvas></div>' +

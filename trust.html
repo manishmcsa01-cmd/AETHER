@@ -25,15 +25,32 @@
   pre { background: #0a0f18; border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin-top: 10px; font-size: 12px; overflow-x: auto; max-height: 260px; color: #9fe8b8; white-space: pre-wrap; word-break: break-all; }
   .wide { grid-column: 1 / -1; }
   .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: #26304a; margin-left: 6px; }
-  .ok { color: var(--good); } .bad { color: var(--accent); }
+  .ok { color: var(--good); } .bad { color: var(--accent); } .warn { color: var(--warn); }
   table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
   th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
   th { color: var(--muted); font-weight: 600; }
+  .kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .kpi-tile { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .kpi-tile .val { font-size: 22px; font-weight: 700; line-height: 1.1; }
+  .kpi-tile .lbl { color: var(--muted); font-size: 11px; margin-top: 4px; text-transform: uppercase; letter-spacing: .04em; }
+  .kpi-tile .sub { color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .kpi-tile.accent .val { color: var(--accent); }
+  .kpi-tile.good .val { color: var(--good); }
+  .kpi-tile.warn .val { color: var(--warn); }
 </style>
 </head>
 <body>
 <h1>AETHER <span>Trust Console</span></h1>
 <div class="sub">Identity &middot; Delegation &middot; Reputation &middot; Recourse — the trust layer for agent-to-agent commerce <span class="pill" id="mode-pill">checking…</span></div>
+
+<div class="card wide" style="margin-bottom:20px;">
+  <h2 style="display:flex;align-items:center;justify-content:space-between;">Portfolio Metrics
+    <button class="secondary" style="margin:0;" onclick="loadMetrics()">Refresh</button>
+  </h2>
+  <div class="kpi-strip" id="kpi-strip">
+    <div class="kpi-tile"><div class="val">—</div><div class="lbl">Identities</div></div>
+  </div>
+</div>
 
 <div class="grid">
   <div class="card">
@@ -118,8 +135,21 @@ document.getElementById('m-expiry').value = new Date(Date.now() + 30*864e5).toIS
 async function call(method, path, body) {
   const opts = { method, headers: { 'Content-Type': 'application/json' } };
   if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(API + path, opts);
-  return r.json();
+  try {
+    const r = await fetch(API + path, opts);
+    try {
+      return await r.json();
+    } catch (parseErr) {
+      return { error: 'Server returned an unreadable response (HTTP ' + r.status + ')' };
+    }
+  } catch (netErr) {
+    // Network failure / server unreachable — every caller does
+    // show(outId, await call(...)), so returning an {error} shape here
+    // (instead of letting the rejection propagate unhandled) means the
+    // panel visibly reports the failure instead of silently staying on
+    // whatever it last showed.
+    return { error: 'Request failed: ' + (netErr && netErr.message ? netErr.message : String(netErr)) };
+  }
 }
 function show(id, data) { document.getElementById(id).textContent = JSON.stringify(data, null, 2); }
 function esc(s){const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
@@ -130,7 +160,7 @@ async function registerIdentity() {
     kind: document.getElementById('reg-kind').value,
     name: document.getElementById('reg-name').value,
     agent_id: document.getElementById('reg-agentid').value || undefined });
-  show('out-identity', data);
+  show('out-identity', data); loadMetrics();
 }
 async function listIdentities() { show('out-identity', await call('GET', '/api/trust/identity')); }
 async function issueMandate() {
@@ -144,13 +174,14 @@ async function issueMandate() {
     parent_id: document.getElementById('m-parent').value || undefined,
     auto_sign: true });
   if (data.id) document.getElementById('t-mandate').value = data.id;
-  show('out-mandate', data);
+  show('out-mandate', data); loadMetrics();
 }
 async function listMandates() { show('out-mandate', await call('GET', '/api/trust/mandates')); }
 async function fund() {
   show('out-fund', await call('POST', '/api/trust/account/fund', {
     did: document.getElementById('f-did').value,
     amount: parseFloat(document.getElementById('f-amount').value) }));
+  loadMetrics();
 }
 async function checkAccount() {
   show('out-fund', await call('GET', '/api/trust/account/' + document.getElementById('f-did').value));
@@ -164,12 +195,12 @@ async function authorize() {
     purpose: document.getElementById('t-purpose').value,
     auto_sign: true });
   if (data.transaction_id) { lastTx = data.transaction_id; document.getElementById('d-tx').value = data.transaction_id; }
-  show('out-tx', data); loadTxs();
+  show('out-tx', data); loadTxs(); loadMetrics();
 }
 async function completeTx() {
   if (!lastTx) return show('out-tx', { error: 'Authorize a transaction first' });
   show('out-tx', await call('POST', '/api/trust/a2a/complete', { transaction_id: lastTx, auto_sign: true }));
-  loadTxs();
+  loadTxs(); loadMetrics();
 }
 async function openDispute() {
   const data = await call('POST', '/api/trust/dispute/open', {
@@ -183,7 +214,7 @@ async function openDispute() {
 async function resolveDispute() {
   if (!lastDispute) return show('out-dispute', { error: 'Open a dispute first' });
   show('out-dispute', await call('POST', '/api/trust/dispute/resolve', { dispute_id: lastDispute }));
-  loadTxs();
+  loadTxs(); loadMetrics();
 }
 async function getReputation() {
   show('out-rep', await call('GET', '/api/trust/reputation/' + document.getElementById('r-did').value));
@@ -192,13 +223,36 @@ async function verifyLedger() { show('out-rep', await call('GET', '/api/trust/le
 async function getCard() {
   show('out-rep', await call('GET', '/.well-known/agent-card/' + document.getElementById('r-did').value));
 }
+function tile(val, lbl, sub, cls) {
+  return '<div class="kpi-tile' + (cls ? ' ' + cls : '') + '"><div class="val">' + esc(val) +
+    '</div><div class="lbl">' + esc(lbl) + '</div>' + (sub ? '<div class="sub">' + esc(sub) + '</div>' : '') + '</div>';
+}
+async function loadMetrics() {
+  const m = await call('GET', '/api/trust/metrics');
+  const strip = document.getElementById('kpi-strip');
+  if (m.error) { strip.innerHTML = tile('—', 'Metrics unavailable', m.error, 'warn'); return; }
+  const idn = m.identities || {}, mnd = m.mandates || {}, tx = m.transactions || {},
+        escrow = m.escrow || {}, dsp = m.disputes || {}, rep = m.reputation || {}, led = m.ledger || {};
+  const byStatus = tx.by_status || {};
+  strip.innerHTML = [
+    tile(idn.total ?? 0, 'Identities', (idn.non_custodial_keys ?? 0) + ' non-custodial'),
+    tile(mnd.active ?? 0, 'Active Mandates', mnd.total + ' total, $' + (mnd.total_root_spend_cap_usd ?? 0) + ' root cap'),
+    tile(tx.total ?? 0, 'Transactions', (byStatus.Escrowed || 0) + ' escrowed, ' + (byStatus.Completed || 0) + ' completed'),
+    tile('$' + (Number(escrow.currently_held_usd) || 0).toFixed(4), 'Escrow Held', ''),
+    tile(dsp.total ?? 0, 'Disputes', dsp.open + ' open · avg resolve ' + (dsp.avg_resolution_hours != null ? dsp.avg_resolution_hours + 'h' : 'n/a')),
+    tile(rep.avg_reputation_score != null ? rep.avg_reputation_score : 'n/a', 'Avg Reputation', rep.agents_with_verified_history + ' agents scored, ' + rep.below_reputation_floor + ' below floor',
+      rep.below_reputation_floor > 0 ? 'warn' : 'good'),
+    tile(led.valid ? 'Valid' : 'BROKEN', 'Ledger Integrity', led.entries + ' entries' + (led.valid ? '' : ' — tampered at seq ' + led.broken_at_seq), led.valid ? 'good' : 'accent'),
+    tile((tx.decline_rate_pct ?? 0) + '%', 'Decline Rate', Object.entries(tx.decline_reasons_by_gate || {}).filter(([,v]) => v > 0).map(([k,v]) => k + ':' + v).join(' ') || 'no declines')
+  ].join('');
+}
 async function loadTxs() {
   const data = await call('GET', '/api/trust/a2a/transactions');
   const tbody = document.querySelector('#tx-table tbody');
   tbody.innerHTML = (data.transactions || []).slice(0, 20).map(t =>
     '<tr><td>' + esc(t.id) + '</td><td>' + esc(short(t.sender_did)) + '</td><td>' + esc(short(t.receiver_did)) +
     '</td><td>' + esc(t.tokens) + '</td><td>$' + esc((t.amount_usd || 0).toFixed(4)) +
-    '</td><td class="' + (t.status === 'Declined' || t.status === 'Refunded' ? 'bad' : 'ok') + '">' + esc(t.status) +
+    '</td><td class="' + (t.status === 'Declined' || t.status === 'Refunded' ? 'bad' : t.status === 'Disputed' ? 'warn' : 'ok') + '">' + esc(t.status) +
     '</td><td>' + esc(short(t.decline_reason || '')) + '</td></tr>').join('');
 }
 (async () => {
@@ -207,6 +261,7 @@ async function loadTxs() {
     document.getElementById('mode-pill').textContent = h.status === 'ok' ? 'backend connected' : 'backend?';
   } catch { document.getElementById('mode-pill').textContent = 'backend offline — start server.py'; }
   loadTxs();
+  loadMetrics();
 })();
 </script>
 </body>

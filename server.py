@@ -798,14 +798,47 @@ def _record_kpi_history():
         # Get active risk score averages
         cursor.execute("SELECT AVG(riskScore) FROM agents")
         avg_risk = cursor.fetchone()[0] or 0.0
-        
+
         # Get high risk count
         cursor.execute("SELECT COUNT(*) FROM agents WHERE riskScore >= 60")
         high_risk_count = cursor.fetchone()[0]
-        
+
+        # Get critical incidents (matches js/data.js's incidents threshold)
+        cursor.execute("SELECT COUNT(*) FROM agents WHERE riskScore >= 80")
+        critical_incidents = cursor.fetchone()[0]
+
+        # Get PII exposure count
+        cursor.execute("SELECT COUNT(*) FROM agents WHERE piiAccess = 1")
+        pii_exposure = cursor.fetchone()[0]
+
+        # Get financial access count, for the same violation-event definition
+        # js/data.js's computeViolations() uses (PII + financial-access +
+        # risk>=60 flags, one violation per triggered condition per agent).
+        cursor.execute("SELECT COUNT(*) FROM agents WHERE financialAccess = 1")
+        financial_access_count = cursor.fetchone()[0]
+        policy_violations = pii_exposure + financial_access_count + high_risk_count
+
+        # Real average availability, not a hardcoded 99.9 — availability is
+        # stored as text (e.g. "99.4"), so cast before averaging.
+        cursor.execute("SELECT AVG(CAST(availability AS REAL)) FROM agents WHERE availability IS NOT NULL AND availability != ''")
+        avg_reliability_row = cursor.fetchone()[0]
+        avg_reliability = round(avg_reliability_row, 1) if avg_reliability_row is not None else 0.0
+
         # Get monthly spend
         monthly_spend = active_spend
-        
+
+        # Budget efficiency — same formula as cumulative_roi above, capped at
+        # 100 to match js/data.js's budgetEfficiency (a ratio, not a return).
+        budget_efficiency = min(100.0, cumulative_roi) if cumulative_spend > 0 else 0.0
+
+        # NOTE: there is no server-side equivalent yet of js/data.js's
+        # compliance-framework scoring (that logic lives client-side and
+        # depends on LLM results this endpoint doesn't have access to), so
+        # compliance_score is recorded as unassessed (-1) rather than a
+        # fabricated 100.0 — a consumer of this history table should treat
+        # -1 as "not assessed", the same convention computeKPIs() uses.
+        compliance_score = -1.0
+
         # Insert history record
         cursor.execute('''
             INSERT INTO kpi_history (
@@ -818,16 +851,16 @@ def _record_kpi_history():
             datetime.now(timezone.utc).isoformat(),
             active_count,
             deboarded_count,
-            100.0, # compliance score fallback
+            compliance_score,
             avg_risk,
-            99.9, # reliability fallback
+            avg_reliability,
             monthly_spend,
             cumulative_roi,
             high_risk_count,
-            0, # policy violations
-            0, # pii exposure
-            0, # critical incidents
-            100.0, # budget efficiency
+            policy_violations,
+            pii_exposure,
+            critical_incidents,
+            budget_efficiency,
             round(monthly_spend / active_count, 2) if active_count > 0 else 0.0,
             round(monthly_spend / active_tasks, 4) if active_tasks > 0 else 0.0
         ))

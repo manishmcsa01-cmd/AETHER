@@ -71,7 +71,7 @@ AETHER.pages.audit = {
         '</div>' +
         '<div class="card-body">' +
           '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;">' +
-            '<div class="metric-row" style="flex-direction: column; align-items: center; text-align: center; cursor: pointer;" onclick="window.location.hash=\'#rationale/complianceScore\'" title="Click to view audits completed rationale">' +
+            '<div class="metric-row" style="flex-direction: column; align-items: center; text-align: center; cursor: pointer;" onclick="window.location.hash=\'#rationale/totalAgents\'" title="Click to view total agents rationale">' +
               '<div class="metric-value" style="font-size: 24px; font-weight: 700; color: #e8ecf4;">' + audit.auditsCompleted + '</div>' +
               '<div class="metric-label" style="color: #7a85a0; font-size: 12px;">Audits Completed</div>' +
             '</div>' +
@@ -83,13 +83,13 @@ AETHER.pages.audit = {
               '<div class="metric-value" style="font-size: 24px; font-weight: 700; color: #ef4444;">' + audit.criticalFindings + '</div>' +
               '<div class="metric-label" style="color: #7a85a0; font-size: 12px;">Critical Findings</div>' +
             '</div>' +
-            '<div class="metric-row" style="flex-direction: column; align-items: center; text-align: center; cursor: pointer;" onclick="window.location.hash=\'#rationale/complianceScore\'" title="Click to view reports generated rationale">' +
+            '<div class="metric-row" style="flex-direction: column; align-items: center; text-align: center;" title="Number of audit reports generated for the current fleet">' +
               '<div class="metric-value" style="font-size: 24px; font-weight: 700; color: #3b82f6;">' + audit.reports.length + '</div>' +
               '<div class="metric-label" style="color: #7a85a0; font-size: 12px;">Reports Generated</div>' +
             '</div>' +
-            '<div class="metric-row" style="flex-direction: column; align-items: center; text-align: center; cursor: pointer;" onclick="window.location.hash=\'#rationale/criticalIncidents\'" title="Click to view avg remediation rationale">' +
+            '<div class="metric-row" style="flex-direction: column; align-items: center; text-align: center;" title="Target remediation time based on the current findings\' severity mix — not a historical average (AETHER doesn\'t yet track finding resolution timestamps)">' +
               '<div class="metric-value" style="font-size: 24px; font-weight: 700; color: #10b981;">' + audit.avgRemediation + '</div>' +
-              '<div class="metric-label" style="color: #7a85a0; font-size: 12px;">Avg Remediation</div>' +
+              '<div class="metric-label" style="color: #7a85a0; font-size: 12px;">Remediation SLA Target</div>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -101,7 +101,7 @@ AETHER.pages.audit = {
     html += '<div class="kpi-grid">' +
 
       /* Audits Completed */
-      '<div class="kpi-card animate-fade-in-up stagger-2" style="cursor: pointer;" onclick="window.location.hash=\'#rationale/complianceScore\'" title="Click to view rationale">' +
+      '<div class="kpi-card animate-fade-in-up stagger-2" style="cursor: pointer;" onclick="window.location.hash=\'#rationale/totalAgents\'" title="Click to view rationale">' +
         '<div class="kpi-card-accent" style="background: #10b981;"></div>' +
         '<div class="kpi-card-header">' +
           '<div class="kpi-card-icon green">' +
@@ -151,7 +151,7 @@ AETHER.pages.audit = {
       '</div>' +
 
       /* Avg Remediation */
-      '<div class="kpi-card animate-fade-in-up stagger-5" style="cursor: pointer;" onclick="window.location.hash=\'#rationale/criticalIncidents\'" title="Click to view rationale">' +
+      '<div class="kpi-card animate-fade-in-up stagger-5" title="Target remediation time based on current findings\' severity mix — not a historical average">' +
         '<div class="kpi-card-accent" style="background: #3b82f6;"></div>' +
         '<div class="kpi-card-header">' +
           '<div class="kpi-card-icon blue">' +
@@ -163,7 +163,7 @@ AETHER.pages.audit = {
           '<span class="kpi-trend neutral">—</span>' +
         '</div>' +
         '<div class="kpi-value tabular-nums">' + audit.avgRemediation + '</div>' +
-        '<div class="kpi-label">Avg Remediation Time</div>' +
+        '<div class="kpi-label">Remediation SLA Target</div>' +
       '</div>' +
 
     '</div>';

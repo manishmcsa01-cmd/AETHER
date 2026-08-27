@@ -230,9 +230,16 @@ def _evaluate_fallback(agents_list):
             })
             actions.append({"time": now, "action": "Unauthorized agent flagged", "agent": agent_name, "type": "danger"})
 
-        # GOV-MODEL-001
-        platform = str(agent.get("platform", "")).strip().lower()
-        if platform and platform not in approved_models:
+        # GOV-MODEL-001 — checks the agent's LLM *model* (e.g. "gpt-4o",
+        # "claude-3-5-sonnet"), not its deployment *platform* (e.g. "OpenAI
+        # GPT", "Microsoft Copilot"). Those are different fields; comparing
+        # platform against the model allowlist meant no value could ever
+        # match, so every single onboarded agent was flagged. Matched by
+        # prefix so dated/versioned model names (e.g. "claude-3-5-sonnet")
+        # still count against their approved family ("claude-3").
+        model = str(agent.get("model", "")).strip().lower()
+        model_approved = any(model == m or model.startswith(m) for m in approved_models)
+        if model and not model_approved:
             vio_counter += 1
             vid = "VIO-" + str(vio_counter).zfill(3)
             violations.append({
@@ -242,7 +249,7 @@ def _evaluate_fallback(agents_list):
                 "agent_id": agent_id,
                 "agent_name": agent_name,
                 "severity": "High",
-                "details": "Model/platform '" + platform + "' is not on the approved list.",
+                "details": "Model '" + model + "' is not on the approved list.",
                 "recommendation": "Migrate to an approved model or submit an exception request.",
                 "status": "Open"
             })

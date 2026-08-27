@@ -38,12 +38,20 @@ AETHER.pages.integrations = {
     /* ── KPI Grid — 4 Cards ──────────────────────────── */
     var kpi = (d && typeof d.computeKPIs === 'function') ? d.computeKPIs() : {};
     var totalAgents = (d && typeof d.getTotalAgentCount === 'function') ? d.getTotalAgentCount() : 0;
-    var connectedPlatforms = connectors.length;
+    var allAgentsForSdkCount = (d && typeof d.getAllAgents === 'function') ? d.getAllAgents() : [];
+    var connectedPlatforms = connectors.filter(function (c) { return c.status === 'connected'; }).length;
     var agentsDiscovered = totalAgents;
-    var activeWebhooks = (kpi.totalAgents || 0) > 0 ? connectors.length : 0;
-    var sdkRegistrations = totalAgents;
+    // "Active Webhooks" \u2014 AETHER models exactly one webhook globally (see the
+    // Webhook Configuration section below), so its real "active" state is
+    // whether that single webhook's config is present, not a count of
+    // connectors (which was a copy-paste of Connected Platforms).
+    var activeWebhooks = totalAgents > 0 ? 1 : 0;
+    var webhooksHealthy = connectors.every(function (c) { return c.healthStatus === 'healthy'; });
+    // SDK Registrations \u2014 agents actually onboarded via the SDK push path,
+    // not the whole fleet (which double-counted "Agents Discovered").
+    var sdkRegistrations = allAgentsForSdkCount.filter(function (a) { return a.monitoringMethod === 'sdk-push'; }).length;
     var agentsTrend = totalAgents > 0 ? ('\u2191 ' + totalAgents + ' onboarded') : 'None yet';
-    var webhookTrend = activeWebhooks > 0 ? 'All Healthy' : 'No agents';
+    var webhookTrend = activeWebhooks > 0 ? (webhooksHealthy ? 'Healthy' : 'Degraded') : 'No agents';
     var sdkTrend = sdkRegistrations > 0 ? (sdkRegistrations + ' registered') : 'None yet';
 
     html += '<div class="kpi-grid">' +
@@ -123,7 +131,7 @@ AETHER.pages.integrations = {
     html += '<div class="card animate-fade-in-up stagger-5" style="margin-bottom: 24px;">' +
       '<div class="card-header" style="display: flex; align-items: center; justify-content: space-between;">' +
         '<h3 style="margin: 0; color: #e8ecf4; font-size: 15px;">🔌 Platform Connectors</h3>' +
-        '<span class="badge badge-success">' + connectors.length + ' connected</span>' +
+        '<span class="badge badge-success">' + connectedPlatforms + ' connected</span>' +
       '</div>' +
       '<div class="card-body">' +
         '<div class="grid-4">';
@@ -464,7 +472,7 @@ AETHER.pages.integrations = {
       '<div class="chart-card-header">' +
         '<div>' +
           '<div class="chart-card-title">Sync Activity</div>' +
-          '<div class="chart-card-subtitle">Platform connector sync events (last 30 days)</div>' +
+          '<div class="chart-card-subtitle">Illustrative sync volume (last 30 days) — no per-connector sync log is recorded yet</div>' +
         '</div>' +
       '</div>' +
       '<div class="chart-card-body">' +
@@ -494,14 +502,21 @@ AETHER.pages.integrations = {
       );
     }
 
-    // ── Sync Activity Chart (simulated 30-day data) ────────
+    // ── Sync Activity Chart (illustrative — no real sync log exists yet) ──
+    // Deterministic rather than Math.random(): a chart re-rendered on every
+    // navigation shouldn't show a different "history" each time nothing
+    // about the underlying agents/connectors actually changed.
     if (c && d && d.last30Days) {
       var agentCount = (typeof d.getTotalAgentCount === 'function') ? d.getTotalAgentCount() : 0;
-      var syncData = d.last30Days.map(function () {
-        return agentCount > 0 ? Math.floor(Math.random() * 50) + 80 : 0;
+      var initConnectors = (cfg && cfg.platformConnectors) ? cfg.platformConnectors : [];
+      var connectedCount = initConnectors.filter(function (cn) { return cn.status === 'connected'; }).length;
+      var syncData = d.last30Days.map(function (_, idx) {
+        if (agentCount === 0) return 0;
+        var wave = Math.round(15 * Math.sin(idx / 3));
+        return Math.max(0, agentCount * Math.max(connectedCount, 1) * 3 + wave);
       });
       c.createBarChart('intg-sync-activity', d.last30Days, [
-        { label: 'Sync Events', data: syncData, color: '#3b82f6' }
+        { label: 'Sync Events (illustrative)', data: syncData, color: '#3b82f6' }
       ]);
     }
 

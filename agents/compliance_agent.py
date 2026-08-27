@@ -233,14 +233,24 @@ def run(agents_list, llm_fn):
                 )
                 continue
 
-            # Normalize frameworks list
+            # Normalize frameworks list. Casts are guarded (matching
+            # risk_agent.py's pattern) — a malformed score for one agent in
+            # one batch should degrade that agent's score to 0, not raise
+            # and abort the whole run, discarding every other agent's
+            # already-computed results in the same batch/request.
+            def _safe_int(value):
+                try:
+                    return int(value)
+                except (ValueError, TypeError):
+                    return 0
+
             frameworks = llm_agent_result.get("frameworks", [])
             normalized_fws = []
             for fw in frameworks:
                 normalized_fws.append({
                     "name": fw.get("name", "Unknown"),
                     "compliant": bool(fw.get("compliant", False)),
-                    "score": int(fw.get("score", 0)),
+                    "score": _safe_int(fw.get("score", 0)),
                     "findings": fw.get("findings", [])
                 })
 
@@ -248,7 +258,7 @@ def run(agents_list, llm_fn):
                 "agent_id": agent_id,
                 "agent_name": agent_name,
                 "frameworks": normalized_fws,
-                "overall_score": int(llm_agent_result.get("overall_score", 0))
+                "overall_score": _safe_int(llm_agent_result.get("overall_score", 0))
             })
 
         print("[ComplianceAgent] Batch " + str(batch_num) + " completed successfully.")

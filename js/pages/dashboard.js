@@ -199,7 +199,7 @@ AETHER.pages.dashboard = {
                 '<path d="M7 7h6M7 10h6M7 13h4"/>' +
               '</svg>' +
             '</div>' +
-            '<span class="kpi-trend neutral">↓ -2</span>' +
+            '<span class="kpi-trend ' + (k.policyViolations > 0 ? 'down' : 'neutral') + '">' + (k.totalAgents > 0 ? (k.policyViolations > 0 ? '⚠ ' + k.policyViolations + ' open' : '✓ clear') : '—') + '</span>' +
           '</div>' +
           '<div class="kpi-value tabular-nums">' + k.policyViolations + '</div>' +
           '<div class="kpi-label">Policy Violations</div>' +
@@ -313,7 +313,7 @@ AETHER.pages.dashboard = {
 
     /* ── Sparklines ─────────────────────────────────────────── */
     c.createSparkline('spark-agents', d.trends.agentGrowth.data, '#3b82f6');
-    c.createSparkline('spark-discovery', d.trends.compliance.data, '#06b6d4');
+    c.createSparkline('spark-discovery', d.trends.discovery.data, '#06b6d4');
     c.createSparkline('spark-compliance', d.trends.compliance.data, '#10b981');
     c.createSparkline('spark-reliability', d.trends.reliability.data, '#8b5cf6');
     c.createSparkline('spark-spend', d.trends.aiSpend.data, '#f59e0b');

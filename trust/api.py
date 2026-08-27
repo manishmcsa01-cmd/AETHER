@@ -29,11 +29,13 @@ Endpoints:
   GET  /api/trust/ledger                 ?limit=
   GET  /api/trust/ledger/verify
   POST /api/trust/policy/check           {agent} | {agents:[...]}
+  GET  /api/trust/metrics                fleet-wide KPI rollup (identities, mandates,
+                                          transactions, escrow, disputes, reputation, ledger)
 """
 
 import os
 
-from . import a2a, delegation, identity, policy, recourse, reputation, store
+from . import a2a, delegation, identity, metrics, policy, recourse, reputation, store
 
 store.init_db()
 
@@ -207,6 +209,10 @@ def _route(method, path, query, body):
         rows = [dict(r) for r in c.fetchall()]
         conn.close()
         return {'entries': rows}, 200
+
+    # ── Portfolio metrics ─────────────────────────────────────
+    if sub == 'metrics' and method == 'GET':
+        return metrics.portfolio_summary(), 200
 
     # ── Deterministic policy checks ───────────────────────────
     if sub == 'policy/check' and method == 'POST':

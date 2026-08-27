@@ -181,7 +181,7 @@ AETHER.data = (function () {
     totalAgents: 0,
     discoveryCoverage: 0,
     complianceScore: 0,
-    avgReliability: 0,
+    avgReliability: '0.0',
     monthlySpend: 0,
     workforceROI: 0,
     highRiskAgents: 0,
@@ -189,12 +189,12 @@ AETHER.data = (function () {
     unknownAgents: 0,
     discoverySLA: '< 24h',
     costPerAgent: 0,
-    costPerTask: 0,
+    costPerTask: '0.00',
     tokenSpend: 0,
     infraCost: 0,
-    availability: 0,
-    successRate: 0,
-    failureRate: 0,
+    availability: '0.0',
+    successRate: '0.0',
+    failureRate: '0.0',
     avgLatency: 0,
     piiExposure: 0,
     criticalIncidents: 0,
@@ -202,13 +202,14 @@ AETHER.data = (function () {
     avgRiskScore: 0,
     complianceAssessed: false,
     riskAssessed: false,
-    activePolicies: 8,
+    activePolicies: 10,
     autoActionsToday: 0,
     policyAdherence: 100,
     certifiedAgents: 0,
     pendingCertification: 0,
     complianceFindings: 0,
-    financialAccess: 0
+    financialAccess: 0,
+    agentUtilization: 0
   };
 
   // ─── Governance Policies (definitions only — no violations) ──
@@ -220,7 +221,9 @@ AETHER.data = (function () {
     { id: 'POL-005', name: 'Data Export Restriction', condition: 'export.target == external', action: 'Block', actionType: 'danger', status: 'Active', violations: 0, lastTriggered: 'Never' },
     { id: 'POL-006', name: 'After Hours Execution', condition: 'time.hour < 6 || time.hour > 22', action: 'Log & Alert', actionType: 'info', status: 'Active', violations: 0, lastTriggered: 'Never' },
     { id: 'POL-007', name: 'Model Version Control', condition: 'model.version != approved_version', action: 'Reject', actionType: 'danger', status: 'Active', violations: 0, lastTriggered: 'Never' },
-    { id: 'POL-008', name: 'Cross-Region Transfer', condition: 'data.region != agent.region', action: 'Escalate', actionType: 'warning', status: 'Active', violations: 0, lastTriggered: 'Never' }
+    { id: 'POL-008', name: 'Cross-Region Transfer', condition: 'data.region != agent.region', action: 'Escalate', actionType: 'warning', status: 'Active', violations: 0, lastTriggered: 'Never' },
+    { id: 'POL-009', name: 'Financial Access Control', condition: 'agent.financialAccess == true', action: 'Monitor', actionType: 'warning', status: 'Active', violations: 0, lastTriggered: 'Never' },
+    { id: 'POL-010', name: 'Elevated Risk Score', condition: 'agent.riskScore >= 60', action: 'Review', actionType: 'danger', status: 'Active', violations: 0, lastTriggered: 'Never' }
   ];
 
   const policyViolations = [];
@@ -398,7 +401,13 @@ AETHER.data = (function () {
       criticality: criticality,
       certificationStatus: certStatus,
       lastSeen: '0h ago',
-      createdDate: new Date().toISOString().slice(0, 10),
+      // Preserve the real onboarding date carried on the config entry
+      // (agents-config.js's _createOnboardEntry now maps the server's
+      // onboardedAt into this field) — stamping "now" here unconditionally
+      // meant every agent looked freshly onboarded on every single render,
+      // which silently broke credential-rotation-age math in
+      // computeIdentity() below.
+      createdDate: entry.createdDate || new Date().toISOString().slice(0, 10),
       monthlyCost: monthlyCost,
       tasksExecuted: tasksExecuted,
       successRate: successRate,
@@ -424,7 +433,9 @@ AETHER.data = (function () {
       _complianceScore: complianceOverall,
       _riskFactors: riskInfo ? (riskInfo.risk_factors || []) : [],
       _riskReasoning: riskInfo ? (riskInfo.reasoning || '') : '',
-      _healthAssessment: healthInfo ? (healthInfo.assessment || '') : ''
+      _healthAssessment: healthInfo ? (healthInfo.assessment || '') : '',
+      // LLM model identifier — used for cost calculations in CFO drill-down
+      model: entry.model || null
     };
   }
 
@@ -563,13 +574,20 @@ AETHER.data = (function () {
       ];
     }
 
+    // Discovery Coverage is a hardcoded constant once any agent exists (see
+    // computeKPIs()) rather than a fluctuating metric, so its honest "trend"
+    // is a flat line at the current value — distinct from (and not a copy of)
+    // the Compliance Score series, which genuinely varies.
+    var discoveryData = Array(12).fill(totalAgents > 0 ? 100 : 0);
+
     return {
       agentGrowth: { labels: MONTHS, data: growthData },
       aiSpend: { labels: MONTHS, data: spendData, budget: budgetData },
       reliability: { labels: MONTHS, data: reliabilityData, sla: Array(12).fill(99.0) },
       compliance: { labels: MONTHS, data: complianceData },
       costPerAgent: { labels: MONTHS, data: cpaData },
-      riskTrend: { labels: MONTHS, data: riskTrendData }
+      riskTrend: { labels: MONTHS, data: riskTrendData },
+      discovery: { labels: MONTHS, data: discoveryData }
     };
   }
 
@@ -660,7 +678,7 @@ AETHER.data = (function () {
       // ── Cost ──────────────────────────────────────
       // LLM cost agent total > sum of per-agent config values
       var totalCost = 0, totalTasks = 0;
-      if (costResults && costResults.total_monthly_spend && costResults.all_agents_summary && costResults.all_agents_summary.length === n) {
+      if (costResults && typeof costResults.total_monthly_spend === 'number' && costResults.all_agents_summary && costResults.all_agents_summary.length === n) {
         totalCost = costResults.total_monthly_spend;
         totalTasks = costResults.total_tasks || 0;
       } else {
@@ -709,19 +727,22 @@ AETHER.data = (function () {
       // ── Compliance Score ──────────────────────────
       // ONLY from LLM compliance agent. If not run, show local rule-based fallback
       var complianceScore = -1; // -1 means not assessed
+      var complianceAssessedByLLM = false;
       if (compResults && compResults.agent_results && compResults.agent_results.length === n) {
         var totalCompScore = 0;
         for (var c = 0; c < compResults.agent_results.length; c++) {
           totalCompScore += (compResults.agent_results[c].overall_score || 0);
         }
         complianceScore = Math.round(totalCompScore / compResults.agent_results.length);
-      } else if (compResults && compResults.frameworks && compResults.frameworks.length > 0 && compResults.agent_results && compResults.agent_results.length === n) {
-        // Fallback to framework average
+        complianceAssessedByLLM = true;
+      } else if (compResults && compResults.frameworks && compResults.frameworks.length > 0) {
+        // Fallback to framework average (agent-level results unavailable/stale)
         var fwTotal = 0;
         for (var fw = 0; fw < compResults.frameworks.length; fw++) {
           fwTotal += (compResults.frameworks[fw].avg_score || 0);
         }
         complianceScore = Math.round(fwTotal / compResults.frameworks.length);
+        complianceAssessedByLLM = true;
       }
 
       if (complianceScore === -1) {
@@ -756,6 +777,17 @@ AETHER.data = (function () {
         if (all[fi].financialAccess) financialCount++;
       }
 
+      // ── Agent Utilization ──────────────────────────
+      // Share of agents that are both Active AND have actually executed
+      // work (tasksExecuted > 0). Distinct from budgetEfficiency (a cost/
+      // labor-offset ratio) — this measures how much of the onboarded
+      // fleet is doing anything, not how cheaply it's doing it.
+      var utilizedCount = 0;
+      for (var ui = 0; ui < n; ui++) {
+        if ((all[ui].status || '') === 'Active' && (parseInt(all[ui].tasksExecuted) || 0) > 0) utilizedCount++;
+      }
+      var agentUtilization = n > 0 ? Math.round((utilizedCount / n) * 100) : 0;
+
       // ── Certification status counts ───────────────
       var certifiedCount = 0;
       var pendingCount = 0;
@@ -770,6 +802,14 @@ AETHER.data = (function () {
       // ── Governance Violations & Actions ───────────
       var govData = AETHER.data && typeof AETHER.data.computeViolations === 'function' ? AETHER.data.computeViolations() : { violations: [], actions: [] };
       var violationsN = govData.violations.length;
+      // Distinct agents with >=1 violation — policyAdherence measures the share of the
+      // fleet that is clean, not the raw count of violation events (one agent can trigger
+      // multiple violations, e.g. PII + financial + risk, and shouldn't triple-count).
+      var nonAdherentAgentIds = {};
+      for (var vgi = 0; vgi < govData.violations.length; vgi++) {
+        nonAdherentAgentIds[govData.violations[vgi].agentId] = true;
+      }
+      var nonAdherentAgentCount = Object.keys(nonAdherentAgentIds).length;
       var actionsN = govData.actions.length;
 
       // ── Compliance Findings ───────────────────────
@@ -786,12 +826,12 @@ AETHER.data = (function () {
         totalAgents: n,
         discoveryCoverage: 100,
         complianceScore: complianceScore >= 0 ? complianceScore : 0,
-        complianceAssessed: complianceScore >= 0,
+        complianceAssessed: complianceAssessedByLLM,
         avgRiskScore: avgRiskScore,
-        riskAssessed: !!(riskResults && riskResults.agents),
+        riskAssessed: !!(riskResults && riskResults.agents && riskResults.agents.length === n),
         avgReliability: avgAvail,
         monthlySpend: totalCost,
-        workforceROI: n > 0 ? Math.round((totalTasks * 0.1) / Math.max(totalCost, 1) * 100) : 0,
+        workforceROI: totalCost > 0 ? Math.round((totalTasks * 0.1) / totalCost * 100) : 0,
         highRiskAgents: highRisk,
         policyViolations: violationsN,
         unknownAgents: 0,
@@ -810,12 +850,35 @@ AETHER.data = (function () {
         // New governance & registry KPIs
         activePolicies: policies.length,
         autoActionsToday: actionsN,
-        policyAdherence: n > 0 ? parseFloat(Math.max(0, 100 - (violationsN / n * 100)).toFixed(1)) : 100,
+        policyAdherence: n > 0 ? parseFloat(Math.max(0, 100 - (nonAdherentAgentCount / n * 100)).toFixed(1)) : 100,
         certifiedAgents: certifiedCount,
         pendingCertification: pendingCount,
         complianceFindings: complianceFindingsN,
-        financialAccess: financialCount
+        financialAccess: financialCount,
+        agentUtilization: agentUtilization
       };
+    },
+
+    // ─── Company-vs-industry benchmark rows ───────────────
+    // Single source of truth for the Benchmark Network page (table + radar
+    // chart) AND the rationale drill-downs for overallRanking/
+    // metricsAboveBenchmark/biggestGap — previously each of those three
+    // consumers built its own near-identical array (or, in rationale.js's
+    // case, referenced a `d.benchmarks` property that was never defined at
+    // all, silently defaulting to an empty array and always showing 0/8).
+    computeBenchmarks: function () {
+      var kpis = this.computeKPIs();
+      var compVal = kpis.complianceAssessed ? parseFloat(kpis.complianceScore) : -1;
+      return [
+        { metric: 'Agent Reliability', company: parseFloat(kpis.availability) || 0, industry: 97.2, unit: '%' },
+        { metric: 'Agent Utilization', company: parseFloat(kpis.agentUtilization) || 0, industry: 72.0, unit: '%' },
+        { metric: 'Cost Per Task', company: parseFloat(kpis.costPerTask) || 0, industry: 0.18, unit: '$' },
+        { metric: 'Compliance Score', company: compVal, industry: 89.0, unit: '%', notAssessed: !kpis.complianceAssessed },
+        { metric: 'Avg Risk Score', company: kpis.riskAssessed ? kpis.avgRiskScore : -1, industry: 25.0, unit: '/100', notAssessed: !kpis.riskAssessed },
+        { metric: 'Discovery Coverage', company: parseFloat(kpis.discoveryCoverage) || 0, industry: 82.0, unit: '%' },
+        { metric: 'Policy Adherence', company: parseFloat(kpis.policyAdherence) || 0, industry: 91.0, unit: '%' },
+        { metric: 'Avg Response Time', company: kpis.avgLatency || 0, industry: 285, unit: 'ms' }
+      ];
     },
 
     // ─── Compute risk distribution from live agents ───────
@@ -897,7 +960,7 @@ AETHER.data = (function () {
         if (a.financialAccess) {
           violations.push({
             id: 'VIO-' + String(violations.length + 1).padStart(3, '0'),
-            policy: 'Payment Threshold',
+            policy: 'Financial Access Control',
             agent: a.name,
             agentId: a.id,
             timestamp: 'On onboard',
@@ -911,7 +974,7 @@ AETHER.data = (function () {
         if (a.riskScore >= 60) {
           violations.push({
             id: 'VIO-' + String(violations.length + 1).padStart(3, '0'),
-            policy: 'Cost Limit',
+            policy: 'Elevated Risk Score',
             agent: a.name,
             agentId: a.id,
             timestamp: 'On onboard',
@@ -1105,25 +1168,47 @@ AETHER.data = (function () {
     // ─── Compute identity data from live agents ───────────
     computeIdentity: function () {
       var all = getAllAgents();
+      // Credential rotation policy: 90-day cycle, with a 30-day "expiring
+      // soon" warning window before the due date. Derived from each agent's
+      // real createdDate (== last rotation, since AETHER doesn't yet track
+      // rotation events separately from onboarding) rather than hardcoded.
+      var ROTATION_DAYS = 90, EXPIRING_WINDOW_DAYS = 30;
+      var now = Date.now();
+      var pendingRotation = 0, expiringSoon = 0;
+      var credentials = all.map(function (a) {
+        var ageDays = null;
+        if (a.createdDate) {
+          var created = new Date(a.createdDate).getTime();
+          if (!isNaN(created)) ageDays = Math.floor((now - created) / 86400000);
+        }
+        var daysUntilDue = ageDays === null ? null : (ROTATION_DAYS - ageDays);
+        var credStatus = 'Active';
+        if (daysUntilDue !== null) {
+          if (daysUntilDue <= 0) { credStatus = 'Rotation Due'; pendingRotation++; }
+          else if (daysUntilDue <= EXPIRING_WINDOW_DAYS) { credStatus = 'Expiring'; expiringSoon++; }
+        }
+        return {
+          agentId: a.id,
+          agent: a.name,
+          type: a.monitoringMethod === 'sdk-push' ? 'SDK Token' : a.monitoringMethod === 'webhook' ? 'Webhook Secret' : 'API Key',
+          status: credStatus,
+          lastRotated: a.createdDate || 'On onboard',
+          expiresIn: daysUntilDue === null ? '90 days' : (daysUntilDue <= 0 ? 'Overdue' : daysUntilDue + ' days'),
+          scope: a.piiAccess ? 'admin' : 'read/write'
+        };
+      });
       return {
         summary: {
           totalIdentities: all.length,
           activeCredentials: all.filter(function (a) { return a.status === 'Active'; }).length,
-          pendingRotation: 0,
-          expiringSoon: 0,
+          pendingRotation: pendingRotation,
+          expiringSoon: expiringSoon,
+          // No credential-revocation event log exists yet (agents are only
+          // ever onboarded/deboarded, never individually re-keyed) — kept
+          // honestly at 0 rather than fabricated; see rationale.js.
           revokedThisMonth: 0
         },
-        credentials: all.map(function (a) {
-          return {
-            agentId: a.id,
-            agent: a.name,
-            type: a.monitoringMethod === 'sdk-push' ? 'SDK Token' : a.monitoringMethod === 'webhook' ? 'Webhook Secret' : 'API Key',
-            status: 'Active',
-            lastRotated: 'On onboard',
-            expiresIn: '90 days',
-            scope: a.piiAccess ? 'admin' : 'read/write'
-          };
-        })
+        credentials: credentials
       };
     },
 
@@ -1134,11 +1219,25 @@ AETHER.data = (function () {
       var comp = this.computeCompliance();
       var violations = this.computeViolations();
 
+      // Remediation SLA target — AETHER doesn't track actual finding
+      // open/resolved timestamps yet, so this is a target computed from the
+      // current findings' severity mix (Critical=1d, High=3d, Medium=7d,
+      // Low=14d), not a historical average of real remediation time.
+      var slaBySeverity = { Critical: 1, High: 3, Medium: 7, Low: 14 };
+      var avgRemediationTarget = 'N/A';
+      if (comp.findings.length > 0) {
+        var slaSum = 0;
+        for (var sfi = 0; sfi < comp.findings.length; sfi++) {
+          slaSum += slaBySeverity[comp.findings[sfi].severity] || slaBySeverity.Medium;
+        }
+        avgRemediationTarget = (slaSum / comp.findings.length).toFixed(1) + ' days';
+      }
+
       return {
         auditsCompleted: n,
         openFindings: comp.findings.length,
         criticalFindings: comp.findings.filter(function (f) { return f.severity === 'Critical'; }).length,
-        avgRemediation: comp.findings.length > 0 ? '4.2 days' : 'N/A',
+        avgRemediation: avgRemediationTarget,
         findings: comp.findings,
         executiveSummary: n === 0
           ? 'No agents have been onboarded yet. Add agents using the onboarding flow to begin audit and compliance monitoring.'
@@ -1156,6 +1255,317 @@ AETHER.data = (function () {
           return { time: a.time, description: a.action + ' — ' + a.agent, type: a.type === 'danger' ? 'red' : a.type === 'warning' ? 'yellow' : 'green' };
         })
       };
+    },
+
+    // ─── Executive Drilldown Helpers ──────────────────────────
+    _costRecommendationsCache: null,
+    getCostRecommendations: function (callback) {
+      if (this._costRecommendationsCache) {
+        callback(this._costRecommendationsCache);
+        return;
+      }
+      var self = this;
+      fetch('/api/cost-recommendations')
+        .then(function (r) {
+          if (!r.ok) throw new Error('API Error');
+          return r.json();
+        })
+        .then(function (data) {
+          if (data && data.recommendations) {
+            self._costRecommendationsCache = data;
+            callback(data);
+          } else {
+            throw new Error('Invalid recommendations shape');
+          }
+        })
+        .catch(function (err) {
+          // Robust Fallback: Mock cost recommendations if server is offline or empty
+          var mockData = {
+            recommendations: [
+              {
+                agent_id: "AGT-10002",
+                agent_name: "Compliance Monitor Agent",
+                agent_model: "gpt-4",
+                current_cost: 4.9931,
+                optimized_cost: 0.6521,
+                savings: 4.341,
+                savings_pct: 86.9,
+                priority: "High",
+                task_recommendations: [
+                  {
+                    task_type: "Log Parsing",
+                    task_count: 12,
+                    total_tokens: 75112,
+                    current_model: "gpt-4",
+                    optimal_model: "snowflake-cortex",
+                    current_cost: 3.123,
+                    optimized_cost: 0.052,
+                    savings: 3.071,
+                    savings_pct: 98.3,
+                    complexity: "Low",
+                    reason: "Structured log filtering requires only pattern matching. Snowflake Cortex handles this at 72% lower cost than GPT-4o and 95% lower than GPT-4."
+                  }
+                ]
+              }
+            ],
+            summary: {
+              total_current_cost: 5.0,
+              total_optimized_cost: 0.65,
+              total_savings: 4.35,
+              total_savings_pct: 87.0,
+              agents_analyzed: 1,
+              agents_with_savings: 1
+            }
+          };
+          self._costRecommendationsCache = mockData;
+          callback(mockData);
+        });
+    },
+
+    getAgentTransactions: function (agentId, callback) {
+      // Try to fetch from backend API
+      fetch('/api/tasks?agent_id=' + agentId)
+        .then(function (r) {
+          if (!r.ok) throw new Error('API Error');
+          return r.json();
+        })
+        .then(function (tasks) {
+          // If tasks from database are empty, fallback to generating mock tasks
+          if (!tasks || tasks.length === 0) {
+            throw new Error('Empty tasks');
+          }
+          callback(tasks);
+        })
+        .catch(function (err) {
+          // Fallback to mock transactions
+          var mockTasks = [];
+          var agent = AETHER.data.getAgent(agentId) || { name: 'Unknown Agent', platform: 'Custom' };
+          var numTasks = 8;
+          var types = [
+            { type: 'Database Query', desc: 'Read customer records', minTok: 500, maxTok: 2000, latency: 150 },
+            { type: 'API Call', desc: 'Sync inventory status', minTok: 1200, maxTok: 5000, latency: 320 },
+            { type: 'Document Search', desc: 'Query internal policy documents', minTok: 2000, maxTok: 8000, latency: 450 },
+            { type: 'LLM Reasoning', desc: 'Draft executive summary response', minTok: 3000, maxTok: 12000, latency: 1200 }
+          ];
+          for (var i = 0; i < numTasks; i++) {
+            var t = types[i % types.length];
+            var tokens = Math.floor(Math.random() * (t.maxTok - t.minTok)) + t.minTok;
+            var inTokens = Math.round(tokens * 0.75);
+            var outTokens = Math.round(tokens * 0.25);
+            
+            var model = agent.platform.indexOf('OpenAI') !== -1 ? 'gpt-4o' : 
+                        agent.platform.indexOf('Copilot') !== -1 ? 'gpt-4' : 
+                        agent.platform.indexOf('Snowflake') !== -1 ? 'snowflake-cortex' :
+                        agent.platform.indexOf('Databricks') !== -1 ? 'databricks-dbrx' :
+                        'claude-3-5-sonnet';
+                        
+            var inRate = model === 'gpt-4o' ? 0.0000025 :
+                         model === 'gpt-4' ? 0.000030 :
+                         model === 'snowflake-cortex' ? 0.0000007 :
+                         model === 'databricks-dbrx' ? 0.0000015 :
+                         0.000003;
+                         
+            var outRate = model === 'gpt-4o' ? 0.000010 :
+                          model === 'gpt-4' ? 0.000060 :
+                          model === 'snowflake-cortex' ? 0.0000028 :
+                          model === 'databricks-dbrx' ? 0.0000045 :
+                          0.000015;
+                          
+            var cost = (inTokens * inRate) + (outTokens * outRate);
+            var timestamp = new Date(Date.now() - i * 3600000 - Math.random() * 1800000).toISOString();
+            mockTasks.push({
+              id: 'TSK-' + agentId.replace('AGT-', '') + 'FF' + i,
+              agent_id: agentId,
+              agent_name: agent.name,
+              timestamp: timestamp,
+              status: Math.random() > 0.05 ? 'Success' : 'Failed',
+              duration_ms: Math.round(t.latency * (0.8 + Math.random() * 0.4)),
+              cost: Number(cost.toFixed(5)),
+              tokens: tokens,
+              input_tokens: inTokens,
+              output_tokens: outTokens,
+              model: model,
+              task_type: t.type,
+              description: Math.random() > 0.05 ? 'Successfully completed: ' + t.desc : 'Failed execution: ' + t.desc
+            });
+          }
+          callback(mockTasks);
+        });
+    },
+
+    getComplianceDetails: function (framework) {
+      // Framework controls list (mocked GDPR, SOC 2, HIPAA, SOX, ISO 27001 failures)
+      var failures = {
+        'SOC 2': [
+          { controlId: 'CC6.1', name: 'Access Control', status: 'Failed', severity: 'High', description: 'Agent has write access to production databases without active authentication tokens.', findingsCount: 2 },
+          { controlId: 'CC6.3', name: 'Boundary Protection', status: 'Failed', severity: 'Critical', description: 'Agent queried database from non-whitelisted IP range.', findingsCount: 1 },
+          { controlId: 'CC6.6', name: 'Data Transmission', status: 'Passed', severity: 'Low', description: 'All database transactions encrypted in transit.', findingsCount: 0 }
+        ],
+        'GDPR': [
+          { controlId: 'Art-32', name: 'Security of Processing', status: 'Failed', severity: 'Critical', description: 'PII logged in plaintext logs during routine operations.', findingsCount: 3 },
+          { controlId: 'Art-25', name: 'Privacy by Design', status: 'Failed', severity: 'Medium', description: 'Data minimization principles violated by storing user addresses.', findingsCount: 1 }
+        ],
+        'HIPAA': [
+          { controlId: 'Sec-164.312', name: 'Access Control', status: 'Failed', severity: 'Critical', description: 'Protected Health Information (PHI) shared on unencrypted Slack channel.', findingsCount: 2 }
+        ],
+        'SOX': [
+          { controlId: 'Sec-404', name: 'Internal Controls', status: 'Failed', severity: 'High', description: 'Financial reconciliation agent altered records without dual authorization.', findingsCount: 1 }
+        ],
+        'ISO 27001': [
+          { controlId: 'A.12.4.1', name: 'Event Logging', status: 'Failed', severity: 'Medium', description: 'Security audit trail not maintained for model fine-tuning runs.', findingsCount: 1 }
+        ]
+      };
+      return failures[framework] || [
+        { controlId: 'GEN-01', name: 'General Security Control', status: 'Failed', severity: 'Medium', description: 'Encryption keys need rotation.', findingsCount: 1 }
+      ];
+    },
+
+    getPIIDetails: function (framework, controlId) {
+      // Specific exposed PII items
+      var list = [];
+      var agents = AETHER.data.getAllAgents();
+      var ag1 = agents[0] || { id: 'AGT-0001', name: 'Customer Assistant' };
+      var ag2 = agents[1] || { id: 'AGT-0002', name: 'HR Recruiter' };
+      
+      if (framework === 'GDPR' || controlId === 'Art-32') {
+        list.push({
+          id: 'FND-G01',
+          agentId: ag1.id,
+          agentName: ag1.name,
+          piiType: 'Email Address',
+          exposedItem: 'm.kap***@company.com',
+          rawPayload: '{"user": "Manish Kapoor", "email": "m.kapoor@company.com", "session_id": "8c4a92"}',
+          targetSystem: 'Console Telemetry Logs',
+          timestamp: '2h ago',
+          severity: 'High'
+        });
+        list.push({
+          id: 'FND-G02',
+          agentId: ag1.id,
+          agentName: ag1.name,
+          piiType: 'Phone Number',
+          exposedItem: '+1-555-***-3920',
+          rawPayload: '{"user": "Manish Kapoor", "phone": "+1-555-223-3920"}',
+          targetSystem: 'Unencrypted S3 Audit Bucket',
+          timestamp: '4h ago',
+          severity: 'Medium'
+        });
+      } else if (framework === 'HIPAA' || controlId === 'Sec-164.312') {
+        list.push({
+          id: 'FND-H01',
+          agentId: ag2.id,
+          agentName: ag2.name,
+          piiType: 'Medical Record Number (MRN)',
+          exposedItem: 'MRN-***-992A',
+          rawPayload: '{"patient_name": "John Doe", "mrn": "MRN-104-992A", "diagnosis": "Hypertension"}',
+          targetSystem: 'Slack Channel #ops-telemetry',
+          timestamp: '1d ago',
+          severity: 'Critical'
+        });
+      } else {
+        list.push({
+          id: 'FND-S01',
+          agentId: ag1.id,
+          agentName: ag1.name,
+          piiType: 'Auth Key / Secret',
+          exposedItem: 'sk_live_51P***a92',
+          rawPayload: '{"api_key": "sk_live_51P2a92h28a19d8", "url": "https://api.stripe.com"}',
+          targetSystem: 'HTTP Request Headers (Cleartext)',
+          timestamp: '1h ago',
+          severity: 'Critical'
+        });
+      }
+      return list;
+    },
+
+    getAgentIntegrations: function (agentId) {
+      // Mock integrations connected to agents
+      return [
+        { name: 'Salesforce CRM API', type: 'REST Endpoint', status: 'Healthy', latency: 240, requests24h: 1840 },
+        { name: 'Snowflake Data Warehouse', type: 'Database Connection', status: Math.random() > 0.15 ? 'Healthy' : 'Degraded', latency: 680, requests24h: 420 },
+        { name: 'Slack Notifications API', type: 'Webhook', status: 'Healthy', latency: 120, requests24h: 95 }
+      ];
+    },
+
+    getIntegrationLogs: function (agentId, integrationName) {
+      var logs = [];
+      var methods = ['POST', 'GET', 'PUT'];
+      var endpoints = {
+        'Salesforce CRM API': ['/services/data/v62.0/sobjects/Account', '/services/data/v62.0/query?q=SELECT+Id,Name+FROM+Contact'],
+        'Snowflake Data Warehouse': ['SELECT * FROM billing_summary LIMIT 100', 'INSERT INTO audit_trail VALUES (...)'],
+        'Slack Notifications API': ['/services/hooks/incoming-webhook/T00000000/B00000000/...', '/services/hooks/incoming-webhook/...']
+      };
+      var pathList = endpoints[integrationName] || ['/api/v1/resource', '/api/v1/update'];
+      
+      for (var i = 0; i < 5; i++) {
+        var method = methods[i % methods.length];
+        var path = pathList[i % pathList.length];
+        var status = (i === 3 && Math.random() > 0.5) ? '503 Service Unavailable' : '200 OK';
+        logs.push({
+          id: 'LOG-' + i + 'AF',
+          timestamp: new Date(Date.now() - i * 600000).toISOString(),
+          method: method,
+          path: path,
+          status: status,
+          latency: Math.round((status.indexOf('503') !== -1 ? 1200 : 250) * (0.8 + Math.random() * 0.4)),
+          payloadSize: (Math.random() * 5 + 0.5).toFixed(1) + ' KB'
+        });
+      }
+      return logs;
+    },
+
+    // ─── Visa A2A Clearing Network Helpers ───────────────────
+    getA2ATransactions: function (callback) {
+      fetch('/api/a2a-transactions')
+        .then(function (r) {
+          if (!r.ok) throw new Error('API Error');
+          return r.json();
+        })
+        .then(function (data) {
+          callback(data.transactions || []);
+        })
+        .catch(function (err) {
+          console.error('[AETHER] Error fetching A2A transactions:', err);
+          callback([]);
+        });
+    },
+
+    authorizeA2ATransaction: function (payload, callback) {
+      fetch('/api/a2a-transactions/authorize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error('API Error');
+          return r.json();
+        })
+        .then(function (data) {
+          callback(data);
+        })
+        .catch(function (err) {
+          console.error('[AETHER] Error authorizing A2A transaction:', err);
+          callback({ status: 'Error', decline_reason: 'Connection failure' });
+        });
+    },
+
+    disputeA2ATransaction: function (txId, callback) {
+      fetch('/api/a2a-transactions/dispute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transaction_id: txId })
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error('API Error');
+          return r.json();
+        })
+        .then(function (data) {
+          callback(data);
+        })
+        .catch(function (err) {
+          console.error('[AETHER] Error refunding A2A transaction:', err);
+          callback({ status: 'Error', message: 'Connection failure' });
+        });
     },
 
     // ─── Formatters ──────────────────────────────────────────

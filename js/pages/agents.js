@@ -62,7 +62,11 @@ AETHER.pages.discovery = {
 
       /* Alert banner */
       '<div class="alert-banner success animate-fade-in-up stagger-1">' +
-        '✅ Last scan completed 12 minutes ago — ' + d.getTotalAgentCount().toLocaleString() + ' agents discovered across 6 platforms' +
+        '✅ Last scan completed ' + (function () {
+          var sa = AETHER.config && AETHER.config.getSupervisoryAgent ? AETHER.config.getSupervisoryAgent('sa-discovery') : null;
+          var lastRun = sa && sa.metrics && sa.metrics.lastRun;
+          return (lastRun && AETHER.supervisorUI) ? AETHER.supervisorUI.relativeTime(lastRun) : 'just now';
+        })() + ' — ' + d.getTotalAgentCount().toLocaleString() + ' agents discovered across ' + d.platforms.length + ' platforms' +
       '</div>' +
 
       /* KPI Grid */
@@ -1083,10 +1087,13 @@ AETHER.pages.identity = {
 
       '</div>' +
 
-      /* Alert banner */
-      '<div class="alert-banner warning animate-fade-in-up stagger-2">' +
-        '⚠️ 18 credentials expiring within 30 days — immediate rotation recommended' +
-      '</div>' +
+      /* Alert banner — only shown when there's something real to warn about */
+      (summary.expiringSoon > 0 || summary.pendingRotation > 0 ?
+        '<div class="alert-banner warning animate-fade-in-up stagger-2">' +
+          '⚠️ ' + summary.expiringSoon + ' credential' + (summary.expiringSoon === 1 ? '' : 's') + ' expiring within 30 days' +
+          (summary.pendingRotation > 0 ? ', ' + summary.pendingRotation + ' overdue for rotation' : '') +
+          ' — immediate rotation recommended' +
+        '</div>' : '') +
 
       /* Credentials table */
       '<div class="table-container animate-fade-in-up stagger-3">' +
@@ -1135,21 +1142,35 @@ AETHER.pages.identity = {
   init: function () {
     AETHER.charts.destroyAll();
 
-    /* Credential Types Doughnut */
+    var d = AETHER.data;
+    var creds = d.computeIdentity().credentials;
+
+    /* Credential Types Doughnut — aggregated from the real credential inventory,
+       not a fixed illustrative distribution. */
+    var typeCounts = {};
+    creds.forEach(function (c) { typeCounts[c.type] = (typeCounts[c.type] || 0) + 1; });
+    var typeLabels = Object.keys(typeCounts);
+    var typeColors = ['#3b82f6', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'];
     AETHER.charts.createDoughnutChart(
       'identity-cred-types-chart',
-      ['OAuth 2.0', 'API Key', 'Service Account', 'mTLS', 'Basic Auth'],
-      [45, 25, 20, 8, 2],
-      ['#3b82f6', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'],
+      typeLabels.length ? typeLabels : ['No credentials'],
+      typeLabels.length ? typeLabels.map(function (l) { return typeCounts[l]; }) : [1],
+      typeLabels.length ? typeLabels.map(function (_, i) { return typeColors[i % typeColors.length]; }) : ['#334155'],
       { legend: true, legendPosition: 'bottom' }
     );
 
-    /* Access Scope Doughnut */
+    /* Access Scope Doughnut — aggregated the same way. */
+    var scopeCounts = {};
+    creds.forEach(function (c) { scopeCounts[c.scope] = (scopeCounts[c.scope] || 0) + 1; });
+    var scopeOrder = ['read only', 'read/write', 'admin'];
+    var scopeLabelMap = { 'read only': 'Read Only', 'read/write': 'Read/Write', 'admin': 'Admin' };
+    var scopeColorMap = { 'read only': '#10b981', 'read/write': '#3b82f6', 'admin': '#ef4444' };
+    var presentScopes = scopeOrder.filter(function (s) { return scopeCounts[s]; });
     AETHER.charts.createDoughnutChart(
       'identity-scope-chart',
-      ['Read Only', 'Read/Write', 'Admin'],
-      [40, 45, 15],
-      ['#10b981', '#3b82f6', '#ef4444'],
+      presentScopes.length ? presentScopes.map(function (s) { return scopeLabelMap[s]; }) : ['No credentials'],
+      presentScopes.length ? presentScopes.map(function (s) { return scopeCounts[s]; }) : [1],
+      presentScopes.length ? presentScopes.map(function (s) { return scopeColorMap[s]; }) : ['#334155'],
       { legend: true, legendPosition: 'bottom' }
     );
   }

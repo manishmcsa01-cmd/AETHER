@@ -21,7 +21,7 @@ _TMP = tempfile.mkdtemp(prefix='aether-test-')
 os.environ['AETHER_DB'] = os.path.join(_TMP, 'test.db')
 os.environ['DEMO_MODE'] = 'true'
 
-from trust import a2a, crypto_utils, delegation, identity, policy, recourse, reputation, store  # noqa: E402
+from trust import a2a, crypto_utils, delegation, identity, metrics, policy, recourse, reputation, store  # noqa: E402
 
 store.init_db()
 
@@ -308,6 +308,65 @@ class TestPolicyEngine(unittest.TestCase):
             'model': 'gpt-4o', 'region': 'us-east-1', 'status': 'Active', 'tasksExecuted': 10,
         }
         self.assertEqual(policy.evaluate_agent(agent), [])
+
+
+class TestPortfolioMetrics(unittest.TestCase):
+    """
+    portfolio_summary() rolls up identities/mandates/transactions/escrow/
+    disputes/reputation/ledger. Assertions here deliberately avoid any
+    assumption about GLOBAL counts or ledger validity, because this suite
+    shares one SQLite database across test classes and TestLedgerIntegrity
+    intentionally corrupts the ledger — this class only checks that the
+    numbers move the way they should relative to a snapshot taken
+    immediately before/after a known action.
+    """
+
+    def setUp(self):
+        self.principal = identity.register('principal', 'Dana (Principal)')
+        self.sender = identity.register('agent', 'Metrics Buyer')
+        self.receiver = identity.register('agent', 'Metrics Seller')
+        self.mandate = delegation.issue(
+            self.principal['did'], self.sender['did'], scope=['*'],
+            spend_cap_usd=50.0, max_tokens_per_tx=200000, expires_at=_future(),
+            auto_sign=True)
+        store.credit(self.sender['did'], 50.0)
+
+    def test_portfolio_summary_reflects_recorded_activity(self):
+        before = metrics.portfolio_summary()
+        r = a2a.authorize(self.mandate['id'], self.sender['did'], self.receiver['did'],
+                          10000, 'work', auto_sign=True)
+        self.assertEqual(r['status'], 'Escrowed')
+        a2a.complete(r['transaction_id'], auto_sign=True)
+        after = metrics.portfolio_summary()
+
+        # No new identities were registered between snapshots.
+        self.assertEqual(after['identities']['total'], before['identities']['total'])
+        # Exactly one new transaction, and it landed as Completed.
+        self.assertEqual(after['transactions']['total'], before['transactions']['total'] + 1)
+        self.assertEqual(after['transactions']['by_status'].get('Completed', 0),
+                          before['transactions']['by_status'].get('Completed', 0) + 1)
+        # Escrow released on completion — nothing should remain held for this sender pair.
+        self.assertGreaterEqual(after['escrow']['total_account_balance_usd'], 0)
+        self.assertIn('valid', after['ledger'])
+        self.assertIsInstance(after['ledger']['valid'], bool)
+        # The receiver now has one verified, completed outcome on file.
+        self.assertGreaterEqual(after['reputation']['agents_with_verified_history'],
+                                before['reputation']['agents_with_verified_history'])
+
+    def test_decline_reasons_bucketed_by_gate(self):
+        before = metrics.portfolio_summary()
+        bogus = a2a.authorize('MND-does-not-exist', self.sender['did'], self.receiver['did'],
+                              1000, 'work', auto_sign=True)
+        self.assertEqual(bogus['status'], 'Declined')
+        self.assertIn('DELEGATION', bogus['decline_reason'])
+        after = metrics.portfolio_summary()
+        before_total = sum(before['transactions']['decline_reasons_by_gate'].values())
+        after_total = sum(after['transactions']['decline_reasons_by_gate'].values())
+        self.assertEqual(after_total, before_total + 1)
+        self.assertEqual(
+            after['transactions']['decline_reasons_by_gate']['DELEGATION'],
+            before['transactions']['decline_reasons_by_gate']['DELEGATION'] + 1,
+        )
 
 
 if __name__ == '__main__':

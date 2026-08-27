@@ -160,7 +160,7 @@ AETHER.supervisorUI = (function () {
 
       html += '<div class="sa-status-item" data-agent-id="' + a.id + '">';
       html += '  <div class="sa-status-dot-wrap">';
-      html += '    <span class="sa-status-dot" style="background:' + dotColor + ';box-shadow:0 0 8px ' + dotColor + '"></span>';
+      html += '    <span class="sa-status-dot ' + (a.status || '').toLowerCase() + '" style="background:' + dotColor + ';box-shadow:0 0 8px ' + dotColor + '"></span>';
       html += '  </div>';
       html += '  <span class="sa-status-icon">' + (a.icon || '🤖') + '</span>';
       html += '  <div class="sa-status-info">';
@@ -418,7 +418,7 @@ AETHER.supervisorUI = (function () {
 
         inner += '<div class="sa-status-item" data-agent-id="' + a.id + '">';
         inner += '  <div class="sa-status-dot-wrap">';
-        inner += '    <span class="sa-status-dot" style="background:' + dotColor + ';box-shadow:0 0 8px ' + dotColor + '"></span>';
+        inner += '    <span class="sa-status-dot ' + (a.status || '').toLowerCase() + '" style="background:' + dotColor + ';box-shadow:0 0 8px ' + dotColor + '"></span>';
         inner += '  </div>';
         inner += '  <span class="sa-status-icon">' + (a.icon || '🤖') + '</span>';
         inner += '  <div class="sa-status-info">';
@@ -469,7 +469,8 @@ AETHER.supervisorUI = (function () {
     renderActivityFeed: renderActivityFeed,
     renderPulseRing:    renderPulseRing,
     initStatusStrip:    initStatusStrip,
-    initActivityFeed:   initActivityFeed
+    initActivityFeed:   initActivityFeed,
+    relativeTime:       _relativeTime
   };
 
 })();

@@ -321,14 +321,26 @@ def run(agents_list, llm_fn):
                     if aid:
                         llm_map[aid] = la
 
+                valid_statuses = ("Healthy", "Degraded", "Unhealthy", "Unreachable")
                 for entry in agents_health:
                     llm_entry = llm_map.get(entry["id"])
                     if llm_entry:
-                        # LLM refines score, status, and assessment
+                        # LLM refines score, status, and assessment. Validated
+                        # the same way risk_agent.py validates risk_score/
+                        # risk_level, since this overwrites an already-clamped
+                        # preliminary score/status and an out-of-range or
+                        # non-numeric LLM value would otherwise propagate
+                        # straight through to the "Availability %" KPI.
                         if "health_score" in llm_entry:
-                            entry["health_score"] = llm_entry["health_score"]
+                            try:
+                                score = float(llm_entry["health_score"])
+                                entry["health_score"] = max(0, min(100, score))
+                            except (ValueError, TypeError):
+                                pass  # keep the preliminary heuristic score
                         if "health_status" in llm_entry:
-                            entry["health_status"] = llm_entry["health_status"]
+                            status = str(llm_entry["health_status"])
+                            if status in valid_statuses:
+                                entry["health_status"] = status
                         if "assessment" in llm_entry:
                             entry["assessment"] = llm_entry["assessment"]
 

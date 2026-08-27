@@ -3,383 +3,1495 @@
     "frameworks": [
       {
         "name": "GDPR",
-        "avg_score": 100.0,
-        "compliant_count": 1,
-        "total_count": 1,
-        "findings": []
+        "avg_score": 0.0,
+        "compliant_count": 0,
+        "total_count": 8,
+        "findings": [
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response"
+        ]
       },
       {
         "name": "SOX",
-        "avg_score": 100.0,
-        "compliant_count": 1,
-        "total_count": 1,
-        "findings": []
+        "avg_score": 0.0,
+        "compliant_count": 0,
+        "total_count": 8,
+        "findings": [
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response"
+        ]
       },
       {
         "name": "HIPAA",
-        "avg_score": 100.0,
-        "compliant_count": 1,
-        "total_count": 1,
-        "findings": []
+        "avg_score": 0.0,
+        "compliant_count": 0,
+        "total_count": 8,
+        "findings": [
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response"
+        ]
       },
       {
         "name": "SOC 2",
-        "avg_score": 100.0,
-        "compliant_count": 1,
-        "total_count": 1,
-        "findings": []
+        "avg_score": 0.0,
+        "compliant_count": 0,
+        "total_count": 8,
+        "findings": [
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response"
+        ]
       },
       {
         "name": "ISO 27001",
-        "avg_score": 100.0,
-        "compliant_count": 1,
-        "total_count": 1,
-        "findings": []
+        "avg_score": 0.0,
+        "compliant_count": 0,
+        "total_count": 8,
+        "findings": [
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response",
+          "Error: LLM returned unsuccessful response"
+        ]
       }
     ],
-    "findings": [],
+    "findings": [
+      {
+        "agent_id": "AGT-10001",
+        "agent_name": "Procurement Intelligence Agent",
+        "framework": "GDPR",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10001",
+        "agent_name": "Procurement Intelligence Agent",
+        "framework": "SOX",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10001",
+        "agent_name": "Procurement Intelligence Agent",
+        "framework": "HIPAA",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10001",
+        "agent_name": "Procurement Intelligence Agent",
+        "framework": "SOC 2",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10001",
+        "agent_name": "Procurement Intelligence Agent",
+        "framework": "ISO 27001",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10002",
+        "agent_name": "Compliance Monitor Agent",
+        "framework": "GDPR",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10002",
+        "agent_name": "Compliance Monitor Agent",
+        "framework": "SOX",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10002",
+        "agent_name": "Compliance Monitor Agent",
+        "framework": "HIPAA",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10002",
+        "agent_name": "Compliance Monitor Agent",
+        "framework": "SOC 2",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10002",
+        "agent_name": "Compliance Monitor Agent",
+        "framework": "ISO 27001",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10003",
+        "agent_name": "Customer Insights Agent",
+        "framework": "GDPR",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10003",
+        "agent_name": "Customer Insights Agent",
+        "framework": "SOX",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10003",
+        "agent_name": "Customer Insights Agent",
+        "framework": "HIPAA",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10003",
+        "agent_name": "Customer Insights Agent",
+        "framework": "SOC 2",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10003",
+        "agent_name": "Customer Insights Agent",
+        "framework": "ISO 27001",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10004",
+        "agent_name": "Data Warehouse Analyst Agent",
+        "framework": "GDPR",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10004",
+        "agent_name": "Data Warehouse Analyst Agent",
+        "framework": "SOX",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10004",
+        "agent_name": "Data Warehouse Analyst Agent",
+        "framework": "HIPAA",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10004",
+        "agent_name": "Data Warehouse Analyst Agent",
+        "framework": "SOC 2",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10004",
+        "agent_name": "Data Warehouse Analyst Agent",
+        "framework": "ISO 27001",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10005",
+        "agent_name": "MLOps Pipeline Agent",
+        "framework": "GDPR",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10005",
+        "agent_name": "MLOps Pipeline Agent",
+        "framework": "SOX",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10005",
+        "agent_name": "MLOps Pipeline Agent",
+        "framework": "HIPAA",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10005",
+        "agent_name": "MLOps Pipeline Agent",
+        "framework": "SOC 2",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10005",
+        "agent_name": "MLOps Pipeline Agent",
+        "framework": "ISO 27001",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10006",
+        "agent_name": "Security Threat Analyst Agent",
+        "framework": "GDPR",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10006",
+        "agent_name": "Security Threat Analyst Agent",
+        "framework": "SOX",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10006",
+        "agent_name": "Security Threat Analyst Agent",
+        "framework": "HIPAA",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10006",
+        "agent_name": "Security Threat Analyst Agent",
+        "framework": "SOC 2",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10006",
+        "agent_name": "Security Threat Analyst Agent",
+        "framework": "ISO 27001",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10007",
+        "agent_name": "HR Policy Assistant Agent",
+        "framework": "GDPR",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10007",
+        "agent_name": "HR Policy Assistant Agent",
+        "framework": "SOX",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10007",
+        "agent_name": "HR Policy Assistant Agent",
+        "framework": "HIPAA",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10007",
+        "agent_name": "HR Policy Assistant Agent",
+        "framework": "SOC 2",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10007",
+        "agent_name": "HR Policy Assistant Agent",
+        "framework": "ISO 27001",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10008",
+        "agent_name": "Finance Reporting Agent",
+        "framework": "GDPR",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10008",
+        "agent_name": "Finance Reporting Agent",
+        "framework": "SOX",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10008",
+        "agent_name": "Finance Reporting Agent",
+        "framework": "HIPAA",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10008",
+        "agent_name": "Finance Reporting Agent",
+        "framework": "SOC 2",
+        "finding": "Error: LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10008",
+        "agent_name": "Finance Reporting Agent",
+        "framework": "ISO 27001",
+        "finding": "Error: LLM returned unsuccessful response"
+      }
+    ],
     "agent_results": [
       {
-        "agent_id": "AGT-0001",
-        "agent_name": "eng",
+        "agent_id": "AGT-10001",
+        "agent_name": "Procurement Intelligence Agent",
         "frameworks": [
           {
             "name": "GDPR",
-            "compliant": true,
-            "score": 100,
-            "findings": []
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
           },
           {
             "name": "SOX",
-            "compliant": true,
-            "score": 100,
-            "findings": []
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
           },
           {
             "name": "HIPAA",
-            "compliant": true,
-            "score": 100,
-            "findings": []
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
           },
           {
             "name": "SOC 2",
-            "compliant": true,
-            "score": 100,
-            "findings": []
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
           },
           {
             "name": "ISO 27001",
-            "compliant": true,
-            "score": 100,
-            "findings": []
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
           }
         ],
-        "overall_score": 100
+        "overall_score": 0,
+        "error": "LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10002",
+        "agent_name": "Compliance Monitor Agent",
+        "frameworks": [
+          {
+            "name": "GDPR",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "SOX",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "HIPAA",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "SOC 2",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "ISO 27001",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          }
+        ],
+        "overall_score": 0,
+        "error": "LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10003",
+        "agent_name": "Customer Insights Agent",
+        "frameworks": [
+          {
+            "name": "GDPR",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "SOX",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "HIPAA",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "SOC 2",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "ISO 27001",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          }
+        ],
+        "overall_score": 0,
+        "error": "LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10004",
+        "agent_name": "Data Warehouse Analyst Agent",
+        "frameworks": [
+          {
+            "name": "GDPR",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "SOX",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "HIPAA",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "SOC 2",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "ISO 27001",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          }
+        ],
+        "overall_score": 0,
+        "error": "LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10005",
+        "agent_name": "MLOps Pipeline Agent",
+        "frameworks": [
+          {
+            "name": "GDPR",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "SOX",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "HIPAA",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "SOC 2",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "ISO 27001",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          }
+        ],
+        "overall_score": 0,
+        "error": "LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10006",
+        "agent_name": "Security Threat Analyst Agent",
+        "frameworks": [
+          {
+            "name": "GDPR",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "SOX",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "HIPAA",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "SOC 2",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "ISO 27001",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          }
+        ],
+        "overall_score": 0,
+        "error": "LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10007",
+        "agent_name": "HR Policy Assistant Agent",
+        "frameworks": [
+          {
+            "name": "GDPR",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "SOX",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "HIPAA",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "SOC 2",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "ISO 27001",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          }
+        ],
+        "overall_score": 0,
+        "error": "LLM returned unsuccessful response"
+      },
+      {
+        "agent_id": "AGT-10008",
+        "agent_name": "Finance Reporting Agent",
+        "frameworks": [
+          {
+            "name": "GDPR",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "SOX",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "HIPAA",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "SOC 2",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          },
+          {
+            "name": "ISO 27001",
+            "compliant": false,
+            "score": 0,
+            "findings": [
+              "Error: LLM returned unsuccessful response"
+            ]
+          }
+        ],
+        "overall_score": 0,
+        "error": "LLM returned unsuccessful response"
       }
     ],
-    "provider": "NVIDIA NIM",
-    "timestamp": "2026-06-19T09:38:37.594582Z",
+    "provider": "unknown",
+    "timestamp": "2026-08-27T14:06:49.694474Z",
     "_meta": {
       "agent_type": "compliance",
-      "elapsed_seconds": 16.98,
-      "agents_analyzed": 1,
-      "timestamp": "2026-06-19T09:38:37.594740+00:00"
+      "elapsed_seconds": 0.0,
+      "agents_analyzed": 8,
+      "timestamp": "2026-08-27T14:06:49.695071+00:00"
     }
   },
   "risk": {
     "agents": [
       {
-        "id": "AGT-0001",
-        "name": "eng",
-        "risk_score": 75,
+        "id": "AGT-10001",
+        "name": "Procurement Intelligence Agent",
+        "risk_score": 0,
         "risk_level": "High",
-        "reasoning": "The primary risk for AGT-0001 stems from its stated 'test' purpose operating within a 'Production' environment. This configuration significantly increases the likelihood of operational instability, unintended side effects on production systems, and potential security vulnerabilities due to relaxed testing configurations or inadequate hardening for a production context. While the agent does not access PII or financial data, and its endpoint is 'localhost' (limiting direct external network exposure), its presence on a production machine still poses an internal attack surface if the host is compromised. The 'Custom Enterprise Agents' platform also introduces potential for unknown vulnerabilities compared to well-vetted solutions.",
+        "reasoning": "Error during assessment: LLM returned unsuccessful response",
         "risk_factors": [
-          "Purpose (test in production environment)",
-          "Environment (production for a test agent)",
-          "Endpoint exposure (localhost in production)",
-          "Platform (custom enterprise agents)"
-        ]
+          "assessment_error"
+        ],
+        "error": "LLM returned unsuccessful response"
+      },
+      {
+        "id": "AGT-10002",
+        "name": "Compliance Monitor Agent",
+        "risk_score": 0,
+        "risk_level": "High",
+        "reasoning": "Error during assessment: LLM returned unsuccessful response",
+        "risk_factors": [
+          "assessment_error"
+        ],
+        "error": "LLM returned unsuccessful response"
+      },
+      {
+        "id": "AGT-10003",
+        "name": "Customer Insights Agent",
+        "risk_score": 0,
+        "risk_level": "High",
+        "reasoning": "Error during assessment: LLM returned unsuccessful response",
+        "risk_factors": [
+          "assessment_error"
+        ],
+        "error": "LLM returned unsuccessful response"
+      },
+      {
+        "id": "AGT-10004",
+        "name": "Data Warehouse Analyst Agent",
+        "risk_score": 0,
+        "risk_level": "High",
+        "reasoning": "Error during assessment: LLM returned unsuccessful response",
+        "risk_factors": [
+          "assessment_error"
+        ],
+        "error": "LLM returned unsuccessful response"
+      },
+      {
+        "id": "AGT-10005",
+        "name": "MLOps Pipeline Agent",
+        "risk_score": 0,
+        "risk_level": "High",
+        "reasoning": "Error during assessment: LLM returned unsuccessful response",
+        "risk_factors": [
+          "assessment_error"
+        ],
+        "error": "LLM returned unsuccessful response"
+      },
+      {
+        "id": "AGT-10006",
+        "name": "Security Threat Analyst Agent",
+        "risk_score": 0,
+        "risk_level": "High",
+        "reasoning": "Error during assessment: LLM returned unsuccessful response",
+        "risk_factors": [
+          "assessment_error"
+        ],
+        "error": "LLM returned unsuccessful response"
+      },
+      {
+        "id": "AGT-10007",
+        "name": "HR Policy Assistant Agent",
+        "risk_score": 0,
+        "risk_level": "High",
+        "reasoning": "Error during assessment: LLM returned unsuccessful response",
+        "risk_factors": [
+          "assessment_error"
+        ],
+        "error": "LLM returned unsuccessful response"
+      },
+      {
+        "id": "AGT-10008",
+        "name": "Finance Reporting Agent",
+        "risk_score": 0,
+        "risk_level": "High",
+        "reasoning": "Error during assessment: LLM returned unsuccessful response",
+        "risk_factors": [
+          "assessment_error"
+        ],
+        "error": "LLM returned unsuccessful response"
       }
     ],
-    "high_risk_count": 1,
-    "avg_risk_score": 75.0,
+    "high_risk_count": 8,
+    "avg_risk_score": 0.0,
     "distribution": {
       "Low": 0,
       "Medium": 0,
-      "High": 1,
+      "High": 8,
       "Critical": 0
     },
-    "provider": "Google Gemini",
-    "timestamp": "2026-06-19T09:38:49.522803Z",
+    "provider": "unknown",
+    "timestamp": "2026-08-27T14:06:49.869646Z",
     "_meta": {
       "agent_type": "risk",
-      "elapsed_seconds": 11.88,
-      "agents_analyzed": 1,
-      "timestamp": "2026-06-19T09:38:49.522931+00:00"
+      "elapsed_seconds": 0.01,
+      "agents_analyzed": 8,
+      "timestamp": "2026-08-27T14:06:49.869862+00:00"
     }
   },
   "governance": {
     "violations": [
       {
         "id": "VIO-001",
-        "policy_id": "GOV-COST-001",
-        "policy_name": "Cost Anomaly Detection",
-        "agent_id": "AGT-0001",
-        "agent_name": "eng",
-        "severity": "Medium",
-        "details": "Agent AGT-0001 (eng) has a monthly cost of 641.0, which exceeds the acceptable threshold of 500.",
-        "recommendation": "Review agent's resource utilization and optimize cost, or adjust the cost threshold if justified.",
+        "policy_id": "GOV-FIN-001",
+        "policy_name": "Financial Transaction Limit",
+        "agent_id": "AGT-10001",
+        "agent_name": "Procurement Intelligence Agent",
+        "severity": "High",
+        "details": "Agent handles financial data. Enhanced monitoring required.",
+        "recommendation": "Implement transaction limits and enable financial audit logging.",
         "status": "Open"
       },
       {
         "id": "VIO-002",
         "policy_id": "GOV-MODEL-001",
         "policy_name": "Model Version Control",
-        "agent_id": "AGT-0001",
-        "agent_name": "eng",
+        "agent_id": "AGT-10001",
+        "agent_name": "Procurement Intelligence Agent",
         "severity": "High",
-        "details": "Agent AGT-0001 (eng) is using a model/platform ('Custom Enterprise Agents') not found on the approved list.",
-        "recommendation": "Migrate agent to an approved model/platform or initiate a review process for the current model/platform.",
+        "details": "Model/platform 'openai gpt' is not on the approved list.",
+        "recommendation": "Migrate to an approved model or submit an exception request.",
         "status": "Open"
       },
       {
         "id": "VIO-003",
-        "policy_id": "GOV-CERT-001",
-        "policy_name": "Certification Expiry",
-        "agent_id": "AGT-0001",
-        "agent_name": "eng",
-        "severity": "Medium",
-        "details": "Agent AGT-0001 (eng) has a certification status of 'Pending', indicating it's not fully certified.",
-        "recommendation": "Expedite the certification process for agent AGT-0001 to ensure compliance.",
+        "policy_id": "GOV-PII-001",
+        "policy_name": "PII Access Control",
+        "agent_id": "AGT-10002",
+        "agent_name": "Compliance Monitor Agent",
+        "severity": "Critical",
+        "details": "Agent has PII access without valid certification. Current status: Pending Review",
+        "recommendation": "Revoke PII access or complete certification immediately.",
+        "status": "Open"
+      },
+      {
+        "id": "VIO-004",
+        "policy_id": "GOV-FIN-001",
+        "policy_name": "Financial Transaction Limit",
+        "agent_id": "AGT-10002",
+        "agent_name": "Compliance Monitor Agent",
+        "severity": "High",
+        "details": "Agent handles financial data. Enhanced monitoring required.",
+        "recommendation": "Implement transaction limits and enable financial audit logging.",
+        "status": "Open"
+      },
+      {
+        "id": "VIO-005",
+        "policy_id": "GOV-MODEL-001",
+        "policy_name": "Model Version Control",
+        "agent_id": "AGT-10002",
+        "agent_name": "Compliance Monitor Agent",
+        "severity": "High",
+        "details": "Model/platform 'microsoft copilot' is not on the approved list.",
+        "recommendation": "Migrate to an approved model or submit an exception request.",
+        "status": "Open"
+      },
+      {
+        "id": "VIO-006",
+        "policy_id": "GOV-MODEL-001",
+        "policy_name": "Model Version Control",
+        "agent_id": "AGT-10003",
+        "agent_name": "Customer Insights Agent",
+        "severity": "High",
+        "details": "Model/platform 'anthropic claude' is not on the approved list.",
+        "recommendation": "Migrate to an approved model or submit an exception request.",
+        "status": "Open"
+      },
+      {
+        "id": "VIO-007",
+        "policy_id": "GOV-FIN-001",
+        "policy_name": "Financial Transaction Limit",
+        "agent_id": "AGT-10004",
+        "agent_name": "Data Warehouse Analyst Agent",
+        "severity": "High",
+        "details": "Agent handles financial data. Enhanced monitoring required.",
+        "recommendation": "Implement transaction limits and enable financial audit logging.",
+        "status": "Open"
+      },
+      {
+        "id": "VIO-008",
+        "policy_id": "GOV-MODEL-001",
+        "policy_name": "Model Version Control",
+        "agent_id": "AGT-10004",
+        "agent_name": "Data Warehouse Analyst Agent",
+        "severity": "High",
+        "details": "Model/platform 'snowflake cortex' is not on the approved list.",
+        "recommendation": "Migrate to an approved model or submit an exception request.",
+        "status": "Open"
+      },
+      {
+        "id": "VIO-009",
+        "policy_id": "GOV-MODEL-001",
+        "policy_name": "Model Version Control",
+        "agent_id": "AGT-10005",
+        "agent_name": "MLOps Pipeline Agent",
+        "severity": "High",
+        "details": "Model/platform 'databricks ai' is not on the approved list.",
+        "recommendation": "Migrate to an approved model or submit an exception request.",
+        "status": "Open"
+      },
+      {
+        "id": "VIO-010",
+        "policy_id": "GOV-MODEL-001",
+        "policy_name": "Model Version Control",
+        "agent_id": "AGT-10006",
+        "agent_name": "Security Threat Analyst Agent",
+        "severity": "High",
+        "details": "Model/platform 'openai gpt' is not on the approved list.",
+        "recommendation": "Migrate to an approved model or submit an exception request.",
+        "status": "Open"
+      },
+      {
+        "id": "VIO-011",
+        "policy_id": "GOV-MODEL-001",
+        "policy_name": "Model Version Control",
+        "agent_id": "AGT-10007",
+        "agent_name": "HR Policy Assistant Agent",
+        "severity": "High",
+        "details": "Model/platform 'anthropic claude' is not on the approved list.",
+        "recommendation": "Migrate to an approved model or submit an exception request.",
+        "status": "Open"
+      },
+      {
+        "id": "VIO-012",
+        "policy_id": "GOV-FIN-001",
+        "policy_name": "Financial Transaction Limit",
+        "agent_id": "AGT-10008",
+        "agent_name": "Finance Reporting Agent",
+        "severity": "High",
+        "details": "Agent handles financial data. Enhanced monitoring required.",
+        "recommendation": "Implement transaction limits and enable financial audit logging.",
+        "status": "Open"
+      },
+      {
+        "id": "VIO-013",
+        "policy_id": "GOV-MODEL-001",
+        "policy_name": "Model Version Control",
+        "agent_id": "AGT-10008",
+        "agent_name": "Finance Reporting Agent",
+        "severity": "High",
+        "details": "Model/platform 'microsoft copilot' is not on the approved list.",
+        "recommendation": "Migrate to an approved model or submit an exception request.",
         "status": "Open"
       }
     ],
     "actions": [
       {
-        "time": "2024-07-30T12:00:00.000000+00:00",
-        "action": "Flagged agent 'eng' for exceeding monthly cost threshold (641.0 > 500).",
-        "agent": "eng",
+        "time": "2026-08-27T14:06:49Z",
+        "action": "Financial access flagged for review",
+        "agent": "Procurement Intelligence Agent",
         "type": "warning"
       },
       {
-        "time": "2024-07-30T12:00:00.000000+00:00",
-        "action": "Flagged agent 'eng' for using an unapproved model/platform 'Custom Enterprise Agents'.",
-        "agent": "eng",
+        "time": "2026-08-27T14:06:49Z",
+        "action": "Unapproved model detected",
+        "agent": "Procurement Intelligence Agent",
+        "type": "warning"
+      },
+      {
+        "time": "2026-08-27T14:06:49Z",
+        "action": "PII access violation detected",
+        "agent": "Compliance Monitor Agent",
         "type": "danger"
       },
       {
-        "time": "2024-07-30T12:00:00.000000+00:00",
-        "action": "Flagged agent 'eng' for 'Pending' certification status.",
-        "agent": "eng",
+        "time": "2026-08-27T14:06:49Z",
+        "action": "Financial access flagged for review",
+        "agent": "Compliance Monitor Agent",
+        "type": "warning"
+      },
+      {
+        "time": "2026-08-27T14:06:49Z",
+        "action": "Unapproved model detected",
+        "agent": "Compliance Monitor Agent",
+        "type": "warning"
+      },
+      {
+        "time": "2026-08-27T14:06:49Z",
+        "action": "Unapproved model detected",
+        "agent": "Customer Insights Agent",
+        "type": "warning"
+      },
+      {
+        "time": "2026-08-27T14:06:49Z",
+        "action": "Financial access flagged for review",
+        "agent": "Data Warehouse Analyst Agent",
+        "type": "warning"
+      },
+      {
+        "time": "2026-08-27T14:06:49Z",
+        "action": "Unapproved model detected",
+        "agent": "Data Warehouse Analyst Agent",
+        "type": "warning"
+      },
+      {
+        "time": "2026-08-27T14:06:49Z",
+        "action": "Unapproved model detected",
+        "agent": "MLOps Pipeline Agent",
+        "type": "warning"
+      },
+      {
+        "time": "2026-08-27T14:06:49Z",
+        "action": "Unapproved model detected",
+        "agent": "Security Threat Analyst Agent",
+        "type": "warning"
+      },
+      {
+        "time": "2026-08-27T14:06:49Z",
+        "action": "Unapproved model detected",
+        "agent": "HR Policy Assistant Agent",
+        "type": "warning"
+      },
+      {
+        "time": "2026-08-27T14:06:49Z",
+        "action": "Financial access flagged for review",
+        "agent": "Finance Reporting Agent",
+        "type": "warning"
+      },
+      {
+        "time": "2026-08-27T14:06:49Z",
+        "action": "Unapproved model detected",
+        "agent": "Finance Reporting Agent",
         "type": "warning"
       }
     ],
-    "total_violations": 3,
-    "provider": "Google Gemini / gemini-2.5-flash",
-    "timestamp": "2026-06-19T09:38:49Z",
+    "total_violations": 13,
+    "provider": "fallback-rules",
+    "timestamp": "2026-08-27T14:06:49Z",
     "_meta": {
       "agent_type": "governance",
-      "elapsed_seconds": 12.91,
-      "agents_analyzed": 1,
-      "timestamp": "2026-06-19T09:39:02.512967+00:00"
+      "elapsed_seconds": 0.0,
+      "agents_analyzed": 8,
+      "timestamp": "2026-08-27T14:06:49.970805+00:00"
     }
   },
   "cost": {
-    "total_monthly_spend": 641.0,
-    "avg_cost_per_agent": 641.0,
-    "avg_cost_per_task": 0.0161,
-    "total_tasks": 39724,
+    "total_monthly_spend": 30.93,
+    "avg_cost_per_agent": 3.87,
+    "avg_cost_per_task": 0.0,
+    "total_tasks": 653153,
     "by_platform": {
       "labels": [
-        "Custom Enterprise Agents"
+        "OpenAI GPT",
+        "Microsoft Copilot",
+        "Anthropic Claude",
+        "Snowflake Cortex",
+        "Databricks AI"
       ],
       "data": [
-        641.0
+        2.84,
+        23.89,
+        3.15,
+        0.37,
+        0.68
       ]
     },
     "top_spenders": [
       {
-        "name": "eng",
-        "cost": 641.0,
-        "tasks": 39724,
-        "cost_per_task": 0.0161,
+        "name": "Finance Reporting Agent",
+        "cost": 12.833399999999996,
+        "tasks": 83744,
+        "cost_per_task": 0.0002,
+        "successRate": 97.9,
+        "tokenUsage": 33791131,
+        "department": "Finance",
+        "platform": "Microsoft Copilot"
+      },
+      {
+        "name": "Compliance Monitor Agent",
+        "cost": 11.053739999999998,
+        "tasks": 79123,
+        "cost_per_task": 0.0001,
+        "successRate": 96.4,
+        "tokenUsage": 34450248,
+        "department": "Legal & Compliance",
+        "platform": "Microsoft Copilot"
+      },
+      {
+        "name": "Customer Insights Agent",
+        "cost": 1.760469999999999,
+        "tasks": 79054,
+        "cost_per_task": 0.0,
+        "successRate": 97.8,
+        "tokenUsage": 33748580,
+        "department": "Marketing",
+        "platform": "Anthropic Claude"
+      },
+      {
+        "name": "Procurement Intelligence Agent",
+        "cost": 1.4461699999999997,
+        "tasks": 82285,
+        "cost_per_task": 0.0,
+        "successRate": 98.2,
+        "tokenUsage": 35702014,
+        "department": "Procurement",
+        "platform": "OpenAI GPT"
+      },
+      {
+        "name": "Security Threat Analyst Agent",
+        "cost": 1.3978800000000002,
+        "tasks": 85064,
+        "cost_per_task": 0.0,
         "successRate": 99.5,
-        "tokenUsage": 16330526,
-        "department": "Engineering",
-        "platform": "Custom Enterprise Agents"
+        "tokenUsage": 35254293,
+        "department": "Security Operations",
+        "platform": "OpenAI GPT"
       }
     ],
     "all_agents_summary": [
       {
-        "name": "eng",
-        "cost": 641.0,
-        "tasks": 39724,
-        "cost_per_task": 0.0161,
+        "name": "Finance Reporting Agent",
+        "cost": 12.833399999999996,
+        "tasks": 83744,
+        "cost_per_task": 0.0002,
+        "successRate": 97.9,
+        "tokenUsage": 33791131,
+        "department": "Finance",
+        "platform": "Microsoft Copilot"
+      },
+      {
+        "name": "Compliance Monitor Agent",
+        "cost": 11.053739999999998,
+        "tasks": 79123,
+        "cost_per_task": 0.0001,
+        "successRate": 96.4,
+        "tokenUsage": 34450248,
+        "department": "Legal & Compliance",
+        "platform": "Microsoft Copilot"
+      },
+      {
+        "name": "Customer Insights Agent",
+        "cost": 1.760469999999999,
+        "tasks": 79054,
+        "cost_per_task": 0.0,
+        "successRate": 97.8,
+        "tokenUsage": 33748580,
+        "department": "Marketing",
+        "platform": "Anthropic Claude"
+      },
+      {
+        "name": "Procurement Intelligence Agent",
+        "cost": 1.4461699999999997,
+        "tasks": 82285,
+        "cost_per_task": 0.0,
+        "successRate": 98.2,
+        "tokenUsage": 35702014,
+        "department": "Procurement",
+        "platform": "OpenAI GPT"
+      },
+      {
+        "name": "Security Threat Analyst Agent",
+        "cost": 1.3978800000000002,
+        "tasks": 85064,
+        "cost_per_task": 0.0,
         "successRate": 99.5,
-        "tokenUsage": 16330526,
-        "department": "Engineering",
-        "platform": "Custom Enterprise Agents"
-      }
-    ],
-    "anomalies": [
-      {
-        "agent": "eng",
-        "issue": "High token usage",
-        "severity": "medium"
+        "tokenUsage": 35254293,
+        "department": "Security Operations",
+        "platform": "OpenAI GPT"
       },
       {
-        "agent": "eng",
-        "issue": "No model specified",
-        "severity": "low"
-      }
-    ],
-    "recommendations": [
-      {
-        "title": "Optimize Token Usage",
-        "description": "Review and optimize token usage for agent 'eng' to reduce costs",
-        "savings": "10%",
-        "priority": "medium"
+        "name": "HR Policy Assistant Agent",
+        "cost": 1.3910599999999997,
+        "tasks": 80196,
+        "cost_per_task": 0.0,
+        "successRate": 98.7,
+        "tokenUsage": 33499515,
+        "department": "Human Resources",
+        "platform": "Anthropic Claude"
       },
       {
-        "title": "Specify Model for Agent",
-        "description": "Specify a model for agent 'eng' to improve cost transparency and potential optimization opportunities",
-        "savings": "5%",
-        "priority": "low"
+        "name": "MLOps Pipeline Agent",
+        "cost": 0.6816000000000002,
+        "tasks": 81403,
+        "cost_per_task": 0.0,
+        "successRate": 97.2,
+        "tokenUsage": 35428915,
+        "department": "AI / ML",
+        "platform": "Databricks AI"
       },
       {
-        "title": "Review Agent Purpose and Criticality",
-        "description": "Review the purpose and criticality of agent 'eng' to ensure alignment with business objectives and cost allocation",
-        "savings": "0%",
-        "priority": "low"
+        "name": "Data Warehouse Analyst Agent",
+        "cost": 0.36639000000000005,
+        "tasks": 82284,
+        "cost_per_task": 0.0,
+        "successRate": 99.0,
+        "tokenUsage": 35053430,
+        "department": "Data Engineering",
+        "platform": "Snowflake Cortex"
       }
     ],
-    "roi_analysis": "The current ROI outlook for the AI agent 'eng' is neutral, with a moderate cost-efficiency score. While the agent's success rate and availability are high, the token usage and lack of model specification suggest opportunities for cost optimization. By addressing these anomalies and implementing the recommended optimizations, the organization can potentially reduce costs by 10-15% and improve the overall ROI of the AI agent.",
-    "provider": "NVIDIA NIM",
-    "timestamp": "2026-06-19T09:39:02.582765Z",
+    "anomalies": [],
+    "recommendations": [],
+    "roi_analysis": "LLM analysis unavailable.",
+    "provider": null,
+    "timestamp": "2026-08-27T14:06:50.115919Z",
     "_meta": {
       "agent_type": "cost",
-      "elapsed_seconds": 25.6,
-      "agents_analyzed": 1,
-      "timestamp": "2026-06-19T09:39:28.184462+00:00"
+      "elapsed_seconds": 0.0,
+      "agents_analyzed": 8,
+      "timestamp": "2026-08-27T14:06:50.117000+00:00"
     }
   },
   "health": {
     "agents": [
       {
-        "id": "AGT-0001",
-        "name": "eng",
+        "id": "AGT-10001",
+        "name": "Procurement Intelligence Agent",
         "endpoint_reachable": true,
-        "response_time_ms": 2055.8,
+        "response_time_ms": 678.0,
+        "status_code": 404,
+        "health_score": 85,
+        "health_status": "Healthy",
+        "assessment": "Client error: HTTP 404"
+      },
+      {
+        "id": "AGT-10002",
+        "name": "Compliance Monitor Agent",
+        "endpoint_reachable": true,
+        "response_time_ms": 612.7,
+        "status_code": 404,
+        "health_score": 80,
+        "health_status": "Healthy",
+        "assessment": "Client error: HTTP 404"
+      },
+      {
+        "id": "AGT-10003",
+        "name": "Customer Insights Agent",
+        "endpoint_reachable": true,
+        "response_time_ms": 507.0,
         "status_code": 405,
-        "health_score": 75,
+        "health_score": 85,
+        "health_status": "Healthy",
+        "assessment": "Client error: HTTP 405"
+      },
+      {
+        "id": "AGT-10004",
+        "name": "Data Warehouse Analyst Agent",
+        "endpoint_reachable": false,
+        "response_time_ms": null,
+        "status_code": null,
+        "health_score": 60,
         "health_status": "Degraded",
-        "assessment": "High response time: 2055.8ms; Client error: HTTP 405"
+        "assessment": "Endpoint unreachable"
+      },
+      {
+        "id": "AGT-10005",
+        "name": "MLOps Pipeline Agent",
+        "endpoint_reachable": true,
+        "response_time_ms": 1944.4,
+        "status_code": 200,
+        "health_score": 95,
+        "health_status": "Healthy",
+        "assessment": "All checks passed"
+      },
+      {
+        "id": "AGT-10006",
+        "name": "Security Threat Analyst Agent",
+        "endpoint_reachable": true,
+        "response_time_ms": 595.9,
+        "status_code": 404,
+        "health_score": 85,
+        "health_status": "Healthy",
+        "assessment": "Client error: HTTP 404"
+      },
+      {
+        "id": "AGT-10007",
+        "name": "HR Policy Assistant Agent",
+        "endpoint_reachable": true,
+        "response_time_ms": 229.4,
+        "status_code": 405,
+        "health_score": 85,
+        "health_status": "Healthy",
+        "assessment": "Client error: HTTP 405"
+      },
+      {
+        "id": "AGT-10008",
+        "name": "Finance Reporting Agent",
+        "endpoint_reachable": true,
+        "response_time_ms": 606.8,
+        "status_code": 404,
+        "health_score": 85,
+        "health_status": "Healthy",
+        "assessment": "Client error: HTTP 404"
       }
     ],
     "summary": {
-      "total": 1,
-      "healthy": 0,
+      "total": 8,
+      "healthy": 7,
       "degraded": 1,
       "unhealthy": 0
     },
-    "provider": "NVIDIA NIM",
-    "timestamp": "2026-06-19T09:39:28.251016Z",
+    "provider": null,
+    "timestamp": "2026-08-27T14:06:50.177127Z",
     "_meta": {
       "agent_type": "health",
-      "elapsed_seconds": 9.69,
-      "agents_analyzed": 1,
-      "timestamp": "2026-06-19T09:39:37.945661+00:00"
+      "elapsed_seconds": 5.29,
+      "agents_analyzed": 8,
+      "timestamp": "2026-08-27T14:06:55.465614+00:00"
     }
   },
   "audit": {
-    "executive_summary": "The audit of AI agents in the enterprise revealed several critical and high-risk findings, including non-compliance with internal policies, potential security vulnerabilities, and inadequate model version control. The findings highlight the need for immediate attention to remediate these issues and ensure the secure and compliant operation of AI agents in the enterprise. The audit also identified areas for improvement in cost management, certification, and risk assessment.",
+    "executive_summary": "Enterprise AI audit completed on 2026-08-27 covering 8 agent(s). 13 finding(s) identified, including 1 critical. Immediate action required for critical and high-severity items.",
     "findings": [
       {
         "id": "FND-001",
         "severity": "High",
         "framework": "Internal Policy",
-        "description": "Agent AGT-0001 (eng) is operating in a production environment with a 'test' purpose, posing a risk of operational instability and potential security vulnerabilities.",
-        "recommendation": "Migrate the agent to a non-production environment or reconfigure its purpose to align with the production environment.",
+        "description": "Governance violation VIO-001: Agent handles financial data. Enhanced monitoring required.",
+        "recommendation": "Implement transaction limits and enable financial audit logging.",
         "status": "Open",
-        "due_date": "2026-07-03"
+        "due_date": "2026-09-10"
       },
       {
         "id": "FND-002",
-        "severity": "Critical",
+        "severity": "High",
         "framework": "Internal Policy",
-        "description": "Agent AGT-0001 (eng) is using a custom enterprise agent platform not found on the approved list, posing a risk of unknown vulnerabilities.",
-        "recommendation": "Migrate the agent to an approved model/platform or initiate a review process for the current model/platform.",
+        "description": "Governance violation VIO-002: Model/platform 'openai gpt' is not on the approved list.",
+        "recommendation": "Migrate to an approved model or submit an exception request.",
         "status": "Open",
-        "due_date": "2026-07-03"
+        "due_date": "2026-09-10"
       },
       {
         "id": "FND-003",
-        "severity": "Medium",
+        "severity": "Critical",
         "framework": "Internal Policy",
-        "description": "Agent AGT-0001 (eng) has a monthly cost of 641.0, exceeding the acceptable threshold of 500.",
-        "recommendation": "Review the agent's resource utilization and optimize cost, or adjust the cost threshold if justified.",
+        "description": "Governance violation VIO-003: Agent has PII access without valid certification. Current status: Pending Review",
+        "recommendation": "Revoke PII access or complete certification immediately.",
         "status": "Open",
-        "due_date": "2026-07-10"
+        "due_date": "2026-09-03"
       },
       {
         "id": "FND-004",
-        "severity": "Medium",
+        "severity": "High",
         "framework": "Internal Policy",
-        "description": "Agent AGT-0001 (eng) has a certification status of 'Pending', indicating it's not fully certified.",
-        "recommendation": "Expedite the certification process for the agent to ensure compliance.",
+        "description": "Governance violation VIO-004: Agent handles financial data. Enhanced monitoring required.",
+        "recommendation": "Implement transaction limits and enable financial audit logging.",
         "status": "Open",
-        "due_date": "2026-07-10"
+        "due_date": "2026-09-10"
+      },
+      {
+        "id": "FND-005",
+        "severity": "High",
+        "framework": "Internal Policy",
+        "description": "Governance violation VIO-005: Model/platform 'microsoft copilot' is not on the approved list.",
+        "recommendation": "Migrate to an approved model or submit an exception request.",
+        "status": "Open",
+        "due_date": "2026-09-10"
+      },
+      {
+        "id": "FND-006",
+        "severity": "High",
+        "framework": "Internal Policy",
+        "description": "Governance violation VIO-006: Model/platform 'anthropic claude' is not on the approved list.",
+        "recommendation": "Migrate to an approved model or submit an exception request.",
+        "status": "Open",
+        "due_date": "2026-09-10"
+      },
+      {
+        "id": "FND-007",
+        "severity": "High",
+        "framework": "Internal Policy",
+        "description": "Governance violation VIO-007: Agent handles financial data. Enhanced monitoring required.",
+        "recommendation": "Implement transaction limits and enable financial audit logging.",
+        "status": "Open",
+        "due_date": "2026-09-10"
+      },
+      {
+        "id": "FND-008",
+        "severity": "High",
+        "framework": "Internal Policy",
+        "description": "Governance violation VIO-008: Model/platform 'snowflake cortex' is not on the approved list.",
+        "recommendation": "Migrate to an approved model or submit an exception request.",
+        "status": "Open",
+        "due_date": "2026-09-10"
+      },
+      {
+        "id": "FND-009",
+        "severity": "High",
+        "framework": "Internal Policy",
+        "description": "Governance violation VIO-009: Model/platform 'databricks ai' is not on the approved list.",
+        "recommendation": "Migrate to an approved model or submit an exception request.",
+        "status": "Open",
+        "due_date": "2026-09-10"
+      },
+      {
+        "id": "FND-010",
+        "severity": "High",
+        "framework": "Internal Policy",
+        "description": "Governance violation VIO-010: Model/platform 'openai gpt' is not on the approved list.",
+        "recommendation": "Migrate to an approved model or submit an exception request.",
+        "status": "Open",
+        "due_date": "2026-09-10"
+      },
+      {
+        "id": "FND-011",
+        "severity": "High",
+        "framework": "Internal Policy",
+        "description": "Governance violation VIO-011: Model/platform 'anthropic claude' is not on the approved list.",
+        "recommendation": "Migrate to an approved model or submit an exception request.",
+        "status": "Open",
+        "due_date": "2026-09-10"
+      },
+      {
+        "id": "FND-012",
+        "severity": "High",
+        "framework": "Internal Policy",
+        "description": "Governance violation VIO-012: Agent handles financial data. Enhanced monitoring required.",
+        "recommendation": "Implement transaction limits and enable financial audit logging.",
+        "status": "Open",
+        "due_date": "2026-09-10"
+      },
+      {
+        "id": "FND-013",
+        "severity": "High",
+        "framework": "Internal Policy",
+        "description": "Governance violation VIO-013: Model/platform 'microsoft copilot' is not on the approved list.",
+        "recommendation": "Migrate to an approved model or submit an exception request.",
+        "status": "Open",
+        "due_date": "2026-09-10"
       }
     ],
     "timeline": [
       {
-        "date": "2026-06-19",
-        "event": "Audit started",
+        "date": "2026-08-27",
+        "event": "Automated audit initiated",
         "type": "info"
       },
       {
-        "date": "2026-06-19",
-        "event": "Key findings discovered, including non-compliance with internal policies and potential security vulnerabilities",
-        "type": "warning"
+        "date": "2026-08-27",
+        "event": "8 agents scanned",
+        "type": "info"
       },
       {
-        "date": "2026-06-19",
-        "event": "Audit report generated, highlighting critical and high-risk findings",
+        "date": "2026-08-27",
+        "event": "1 critical finding(s) flagged",
         "type": "danger"
       },
       {
-        "date": "2026-07-03",
-        "event": "Remediation deadline for critical findings",
-        "type": "danger"
-      },
-      {
-        "date": "2026-07-10",
-        "event": "Remediation deadline for medium-risk findings",
-        "type": "warning"
+        "date": "2026-08-27",
+        "event": "Audit report generated",
+        "type": "success"
       }
     ],
     "reports": [
       {
-        "name": "AI Agent Audit Report",
-        "date": "2026-06-19",
+        "name": "AETHER AI Agent Audit \u2014 2026-08-27",
+        "date": "2026-08-27",
         "status": "Published",
-        "findings": 4
+        "findings": 13
       }
     ],
     "stats": {
       "audits_completed": 1,
-      "open_findings": 4,
+      "open_findings": 13,
       "critical_findings": 1,
       "avg_remediation": "14 days"
     },
-    "provider": "NVIDIA NIM / meta/llama-3.1-70b-instruct",
-    "timestamp": "2026-06-19T09:39:38Z",
+    "provider": "fallback-rules",
+    "timestamp": "2026-08-27T14:06:55Z",
     "_meta": {
       "agent_type": "audit",
-      "elapsed_seconds": 39.65,
-      "agents_analyzed": 1,
-      "timestamp": "2026-06-19T09:40:17.654668+00:00"
+      "elapsed_seconds": 0.0,
+      "agents_analyzed": 8,
+      "timestamp": "2026-08-27T14:06:55.602503+00:00"
     }
   }
 }

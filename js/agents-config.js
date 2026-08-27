@@ -1109,7 +1109,13 @@ AETHER.config = (function () {
       costCenter: agentData.costCenter || agentData.department || null,
       sponsor: agentData.sponsor || null,
       purpose: agentData.purpose || '',
-      createdDate: agentData.createdDate || new Date().toISOString().split('T')[0],
+      // Prefer the server's real onboarding timestamp (onboardedAt, e.g. from
+      // syncFromServer() pulling /api/agents) over stamping "now" — this is
+      // what credential-rotation-age math (js/data.js computeIdentity()) is
+      // keyed on, so silently resetting it to today on every sync/reload
+      // made every credential look freshly rotated regardless of how long
+      // the agent has actually been onboarded.
+      createdDate: (agentData.createdDate || (agentData.onboardedAt ? String(agentData.onboardedAt).split('T')[0] : null)) || new Date().toISOString().split('T')[0],
       onboardedDate: new Date().toISOString(),
       lastModified: new Date().toISOString(),
 
@@ -1199,7 +1205,10 @@ AETHER.config = (function () {
         dlpPolicies: agentData.dlpPolicies || [],
         usageTracking: true,
         activityLogging: true
-      } : null
+      } : null,
+
+      // ── LLM Model ── (for cost calculations and token analytics)
+      model: agentData.model || null
     };
   }
 
@@ -1500,7 +1509,7 @@ AETHER.config = (function () {
           } else {
             // Update existing local agent with backend values if they changed
             var modified = false;
-            var fields = ['monthlyCost', 'tasksExecuted', 'tokenUsage', 'riskScore', 'certificationStatus', 'status', 'availability', 'avgLatency'];
+            var fields = ['monthlyCost', 'tasksExecuted', 'tokenUsage', 'riskScore', 'certificationStatus', 'status', 'availability', 'avgLatency', 'model'];
             fields.forEach(function (f) {
               if (sa[f] !== undefined && sa[f] !== localAgent[f]) {
                 localAgent[f] = sa[f];
